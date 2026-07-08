@@ -4,7 +4,7 @@
   "description": "Backend API for Bereket Fikre Portfolio Website",
   "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "build": "npm run db:generate && npm run db:migrate",
     "start": "node src/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -30,6 +30,7 @@
     "jsonwebtoken": "9.0.2",
     "morgan": "1.10.0",
     "multer": "1.4.5-lts.1",
+    "prisma": "5.22.0",
     "streamifier": "0.1.1",
     "nodemailer": "6.9.16",
     "slugify": "1.6.6",
@@ -37,7 +38,6 @@
     "winston": "3.17.0"
   },
   "devDependencies": {
-    "nodemon": "3.1.9",
-    "prisma": "5.22.0"
+    "nodemon": "3.1.9"
   }
 }
