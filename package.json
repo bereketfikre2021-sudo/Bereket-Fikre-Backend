@@ -4,14 +4,14 @@
   "description": "Backend API for Bereket Fikre Portfolio Website",
   "main": "src/server.js",
   "scripts": {
-    "build": "npm run db:generate && npm run db:migrate",
+    "build": "npm run db:generate && npm run db:push",
     "start": "node src/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push --accept-data-loss"
   },
   "engines": {
     "node": ">=18.0.0"
