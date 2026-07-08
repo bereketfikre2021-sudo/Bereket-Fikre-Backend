@@ -1,0 +1,295 @@
+// ============================================================
+// Prisma Schema — Bereket Fikre Portfolio Backend
+// Database: PostgreSQL (Neon)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// ============================================================
+// ADMIN USER
+// ============================================================
+model Admin {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String   // bcrypt hash
+  role         Role     @default(ADMIN)
+  isActive     Boolean  @default(true)
+  avatar       String?  // Cloudinary URL
+  avatarPublicId String? // Cloudinary public_id for deletion
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+
+  @@map("admins")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+enum Role {
+  ADMIN
+  SUPER_ADMIN
+}
+
+// ============================================================
+// FEATURED PROJECTS
+// ============================================================
+model Project {
+  id               String        @id @default(uuid())
+  title            String
+  slug             String        @unique
+  category         String
+  shortDescription String        @db.Text
+  fullDescription  String        @db.Text
+  thumbnail        String?       // Cloudinary URL
+  thumbnailPublicId String?      // Cloudinary public_id for deletion
+  galleryImages    ProjectImage[]
+  technologies     String[]      // Array of tech/tool names
+  liveUrl          String?
+  githubUrl        String?
+  featured         Boolean       @default(false)
+  displayOrder     Int           @default(0)
+  status           ContentStatus @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@map("projects")
+}
+
+model ProjectImage {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String   // Cloudinary public_id
+  altText   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("project_images")
+}
+
+// ============================================================
+// SERVICES
+// ============================================================
+model Service {
+  id               String         @id @default(uuid())
+  serviceNumber    String         // "01", "02", etc.
+  title            String
+  slug             String         @unique
+  category         String
+  iconSvg          String?        @db.Text  // SVG markup string
+  iconClass        String?        // e.g. "fa-brands fa-figma"
+  shortDescription String         @db.Text
+  fullDescription  String?        @db.Text
+  bulletPoints     String[]       // Dynamic list of features/includes
+  featuredImage    String?        // Cloudinary URL
+  featuredImagePublicId String?
+  galleryImages    ServiceImage[]
+  processList      ServiceProcess[]
+  technologies     String[]       // Tools used
+  ctaText          String?        @default("Request a Quote")
+  ctaLink          String?        @default("#contact")
+  displayOrder     Int            @default(0)
+  featured         Boolean        @default(false)
+  isActive         Boolean        @default(true)
+  seoTitle         String?
+  seoDescription   String?
+  // Frontend-matching fields
+  type             String?        // e.g. "Complete Branding"
+  deliveryTime     String?        // e.g. "14-21 Business Days"
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("services")
+}
+
+model ServiceImage {
+  id        String   @id @default(uuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String
+  altText   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("service_images")
+}
+
+model ServiceProcess {
+  id          String   @id @default(uuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  stepNumber  Int
+  title       String
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  @@map("service_processes")
+}
+
+// ============================================================
+// PROJECT INSIGHTS (Case Studies + Design Blogs)
+// ============================================================
+model Insight {
+  id             String        @id @default(uuid())
+  type           InsightType
+  title          String
+  slug           String        @unique
+  coverImage     String?       // Cloudinary URL
+  coverPublicId  String?
+  excerpt        String        @db.Text
+  content        String        @db.Text  // Rich text / HTML
+  category       String
+  tags           String[]
+  author         String        @default("Bereket Fikre")
+  readingTime    Int?          // in minutes, auto-calculated
+  publishDate    DateTime?
+  status         ContentStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("insights")
+}
+
+enum InsightType {
+  CASE_STUDY
+  BLOG_POST
+}
+
+// ============================================================
+// TRUSTED PARTNERS
+// ============================================================
+model TrustedPartner {
+  id           String   @id @default(uuid())
+  companyName  String
+  logo         String?  // Cloudinary URL
+  logoPublicId String?
+  website      String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("trusted_partners")
+}
+
+// ============================================================
+// CLIENT TESTIMONIALS
+// ============================================================
+model Testimonial {
+  id             String   @id @default(uuid())
+  clientName     String
+  company        String?
+  position       String?
+  profileImage   String?  // Cloudinary URL
+  profilePublicId String?
+  testimonial    String   @db.Text
+  rating         Int      @default(5) // 1-5
+  featured       Boolean  @default(false)
+  displayOrder   Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
+// ============================================================
+// FAQ
+// ============================================================
+model Faq {
+  id           String   @id @default(uuid())
+  question     String
+  answer       String   @db.Text
+  category     String?  @default("General")
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+// ============================================================
+// CONTACT FORM SUBMISSIONS
+// ============================================================
+model ContactSubmission {
+  id        String          @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String          @db.Text
+  formType  String          @default("contact")
+  status    SubmissionStatus @default(NEW)
+  ipAddress String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@map("contact_submissions")
+}
+
+// ============================================================
+// PROJECT REQUEST SUBMISSIONS
+// ============================================================
+model ProjectRequest {
+  id                     String          @id @default(uuid())
+  firstName              String
+  lastName               String
+  email                  String
+  phone                  String?
+  company                String?
+  serviceNeeded          String
+  budgetRange            String
+  timeline               String
+  projectDescription     String          @db.Text
+  preferredContactMethod String          @default("email")
+  formType               String          @default("project_request")
+  submittedAt            DateTime?
+  status                 SubmissionStatus @default(NEW)
+  ipAddress              String?
+  notes                  String?         @db.Text  // Admin notes
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  @@map("project_requests")
+}
+
+// ============================================================
+// SHARED ENUMS
+// ============================================================
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum SubmissionStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
