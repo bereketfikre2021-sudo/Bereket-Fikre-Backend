@@ -4,7 +4,6 @@ const {
   createInsight, updateInsight, deleteInsight,
 } = require('../controllers/insight.controller');
 const { authenticate }  = require('../middleware/auth');
-const { uploadLimiter } = require('../middleware/rateLimiter');
 const validate          = require('../middleware/validate');
 const { insightRules }  = require('../validators/insight.validator');
 const { upload }        = require('../services/upload.service');
@@ -29,7 +28,7 @@ const resolveFolderKey = (req) => {
   return 'CASE_STUDIES';
 };
 
-const uploadCover = [uploadLimiter, ...upload('coverImage', resolveFolderKey)];
+const uploadCover = upload('coverImage', resolveFolderKey);
 
 // ——— Public ———
 router.get('/',          getInsights);

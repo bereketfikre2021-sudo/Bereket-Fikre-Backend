@@ -7,7 +7,6 @@ const {
   reorderServices,
 } = require('../controllers/service.controller');
 const { authenticate }  = require('../middleware/auth');
-const { uploadLimiter } = require('../middleware/rateLimiter');
 const validate          = require('../middleware/validate');
 const { serviceRules, processRules } = require('../validators/service.validator');
 const { upload }        = require('../services/upload.service');
@@ -15,8 +14,8 @@ const { upload }        = require('../services/upload.service');
 const router = Router();
 
 // Featured image + gallery images → bereketfikre/services/
-const uploadFeatured = [uploadLimiter, ...upload('featuredImage', 'SERVICES')];
-const uploadGallery  = [uploadLimiter, ...upload('image',         'SERVICES')];
+const uploadFeatured = upload('featuredImage', 'SERVICES');
+const uploadGallery  = upload('image',         'SERVICES');
 
 // ——— Public ———
 router.get('/',          getServices);

@@ -8,6 +8,7 @@ const { generateUniqueSlug } = require('../utils/slugify');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const logger = require('../utils/logger');
+const { resolveContentAction } = require('../utils/activityLog');
 
 // GET /api/projects  (public)
 const getProjects = async (req, res, next) => {
@@ -18,7 +19,19 @@ const getProjects = async (req, res, next) => {
     const where = {};
     if (req.query.status) where.status = req.query.status;
     if (req.query.featured !== undefined) where.featured = req.query.featured === 'true';
-    if (req.query.category) where.category = { contains: req.query.category, mode: 'insensitive' };
+
+    // Admin filter tabs — maps to seeded category slugs
+    const FILTER_GROUPS = {
+      'brand-identity': ['brand-identity-design', 'logo-design', 'visual-identity-systems'],
+      'digital-design': ['digital-social-media-design', 'marketing-campaign-design'],
+      'print-marketing': ['print-design', 'brand-applications-assets'],
+      'creative-direction': ['art-direction-visual-guidance'],
+    };
+    if (req.query.filter && FILTER_GROUPS[req.query.filter]) {
+      where.category = { in: FILTER_GROUPS[req.query.filter] };
+    } else if (req.query.category) {
+      where.category = { contains: req.query.category, mode: 'insensitive' };
+    }
     if (req.query.search) {
       where.OR = [
         { title: { contains: req.query.search, mode: 'insensitive' } },
@@ -109,6 +122,12 @@ const createProject = async (req, res, next) => {
     });
 
     logger.info(`Project created: ${project.id} - ${project.title}`);
+    req.logActivity?.({
+      action: project.status === 'PUBLISHED' ? 'PUBLISHED' : 'CREATED',
+      entity: 'Project',
+      entityId: project.id,
+      entityName: project.title,
+    });
     return created(res, project, 'Project created successfully');
   } catch (err) {
     next(err);
@@ -168,6 +187,13 @@ const updateProject = async (req, res, next) => {
       include: { galleryImages: { orderBy: { order: 'asc' } } },
     });
 
+    req.logActivity?.({
+      action: status ? resolveContentAction(existing, status) : 'UPDATED',
+      entity: 'Project',
+      entityId: updated.id,
+      entityName: updated.title,
+    });
+
     return success(res, updated, 'Project updated successfully');
   } catch (err) {
     next(err);
@@ -198,6 +224,12 @@ const deleteProject = async (req, res, next) => {
     await prisma.project.delete({ where: { id } });
 
     logger.info(`Project deleted: ${id}`);
+    req.logActivity?.({
+      action: 'DELETED',
+      entity: 'Project',
+      entityId: id,
+      entityName: project.title,
+    });
     return success(res, null, 'Project deleted successfully');
   } catch (err) {
     next(err);

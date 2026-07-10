@@ -5,7 +5,7 @@ const {
   updateAvatar, changePassword,
 } = require('../controllers/auth.controller');
 const { authenticate }  = require('../middleware/auth');
-const { authLimiter, uploadLimiter } = require('../middleware/rateLimiter');
+const { authLimiter } = require('../middleware/rateLimiter');
 const validate          = require('../middleware/validate');
 const { loginRules, changePasswordRules, refreshRules } = require('../validators/auth.validator');
 const { upload }        = require('../services/upload.service');
@@ -36,7 +36,7 @@ router.post('/logout', authenticate, logout);
 router.get('/me', authenticate, getMe);
 
 // PUT /api/auth/avatar  — click-to-change profile picture
-router.put('/avatar', authenticate, uploadLimiter, ...uploadAvatar, updateAvatar);
+router.put('/avatar', authenticate, ...uploadAvatar, updateAvatar);
 
 // PUT /api/auth/change-password
 router.put('/change-password', authenticate, changePasswordRules, validate, changePassword);

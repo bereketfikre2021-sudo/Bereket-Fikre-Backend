@@ -32,10 +32,23 @@ const contactLimiter = createLimiter(
   'Too many submissions. Please try again in 15 minutes.'
 );
 
-// Upload endpoints
+// Upload endpoints — only enforced when a file is actually present (see upload.service.js)
+const UPLOAD_RATE_LIMIT_MAX = env.isDev ? 500 : 20;
 const uploadLimiter = createLimiter(
-  20,
+  UPLOAD_RATE_LIMIT_MAX,
   'Too many uploads. Please try again later.'
 );
 
-module.exports = { generalLimiter, authLimiter, contactLimiter, uploadLimiter };
+/** Apply upload rate limit only after multer has parsed a file into req.file */
+const enforceUploadLimitIfFile = (req, res, next) => {
+  if (!req.file) return next();
+  return uploadLimiter(req, res, next);
+};
+
+module.exports = {
+  generalLimiter,
+  authLimiter,
+  contactLimiter,
+  uploadLimiter,
+  enforceUploadLimitIfFile,
+};

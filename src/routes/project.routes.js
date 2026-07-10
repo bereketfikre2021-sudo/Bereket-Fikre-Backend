@@ -6,7 +6,6 @@ const {
   reorderProjects,
 } = require('../controllers/project.controller');
 const { authenticate }  = require('../middleware/auth');
-const { uploadLimiter } = require('../middleware/rateLimiter');
 const validate          = require('../middleware/validate');
 const { projectRules, listRules } = require('../validators/project.validator');
 const { upload }        = require('../services/upload.service');
@@ -14,8 +13,8 @@ const { upload }        = require('../services/upload.service');
 const router = Router();
 
 // Thumbnail + gallery images both go to bereketfikre/featured-projects/
-const uploadThumb   = [uploadLimiter, ...upload('thumbnail', 'FEATURED_PROJECTS')];
-const uploadGallery = [uploadLimiter, ...upload('image',     'FEATURED_PROJECTS')];
+const uploadThumb   = upload('thumbnail', 'FEATURED_PROJECTS');
+const uploadGallery = upload('image',     'FEATURED_PROJECTS');
 
 // ——— Public ———
 router.get('/',          listRules, validate, getProjects);

@@ -32,6 +32,7 @@ const multer       = require('multer');
 const streamifier  = require('streamifier');
 const cloudinary   = require('../config/cloudinary');
 const logger       = require('../utils/logger');
+const { enforceUploadLimitIfFile } = require('../middleware/rateLimiter');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1.  FOLDER CONSTANTS
@@ -282,13 +283,16 @@ const replaceAsset = async (
  * @param {string|Function} folderKeyOrFn
  *        - A FOLDERS key string, OR
  *        - A function (req) => FOLDERS key string  (resolved at request time)
- * @returns {[Function, Function]}  Two Express middleware functions
+ * @returns {[Function, Function, Function]}  Three Express middleware functions
  */
 const upload = (fieldName, folderKeyOrFn) => {
   // Middleware 1: parse multipart with multer
   const parseMultipart = multerUpload.single(fieldName);
 
-  // Middleware 2: stream buffer → Cloudinary
+  // Middleware 2: rate-limit only when a file was actually uploaded
+  const rateLimitIfFile = enforceUploadLimitIfFile;
+
+  // Middleware 3: stream buffer → Cloudinary
   const toCloudinary = async (req, res, next) => {
     // No file in this request — skip silently
     if (!req.file) return next();
@@ -328,7 +332,7 @@ const upload = (fieldName, folderKeyOrFn) => {
     }
   };
 
-  return [parseMultipart, toCloudinary];
+  return [parseMultipart, rateLimitIfFile, toCloudinary];
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

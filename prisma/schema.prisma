@@ -280,6 +280,23 @@ model ProjectRequest {
 }
 
 // ============================================================
+// ACTIVITY LOG
+// ============================================================
+model ActivityLog {
+  id         String   @id @default(uuid())
+  adminId    String?
+  adminName  String?  // snapshot — preserved even if admin is deleted
+  action     String   // e.g. 'CREATED', 'UPDATED', 'DELETED', 'PUBLISHED'
+  entity     String   // e.g. 'Project', 'Service', 'FAQ'
+  entityId   String?
+  entityName String?  // human-readable name snapshot
+  meta       Json?    // optional extra context
+  createdAt  DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+// ============================================================
 // SHARED ENUMS
 // ============================================================
 enum ContentStatus {

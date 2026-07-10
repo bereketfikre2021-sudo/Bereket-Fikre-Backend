@@ -4,7 +4,6 @@ const {
   getTestimonials, getTestimonial, createTestimonial, updateTestimonial, deleteTestimonial,
 } = require('../controllers/partner.controller');
 const { authenticate }  = require('../middleware/auth');
-const { uploadLimiter } = require('../middleware/rateLimiter');
 const validate          = require('../middleware/validate');
 const { partnerRules, testimonialRules } = require('../validators/partner.validator');
 const { upload }        = require('../services/upload.service');
@@ -13,8 +12,8 @@ const router = Router();
 
 // Partner logos   → bereketfikre/trusted-partners/
 // Profile images  → bereketfikre/testimonials/
-const uploadLogo    = [uploadLimiter, ...upload('logo',         'TRUSTED_PARTNERS')];
-const uploadProfile = [uploadLimiter, ...upload('profileImage', 'TESTIMONIALS')];
+const uploadLogo    = upload('logo',         'TRUSTED_PARTNERS');
+const uploadProfile = upload('profileImage', 'TESTIMONIALS');
 
 // ——— Partners — Public ———
 router.get('/partners',    getPartners);

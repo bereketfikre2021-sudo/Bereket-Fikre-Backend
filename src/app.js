@@ -22,6 +22,7 @@ const partnerRoutes = require('./routes/partner.routes');
 const faqRoutes = require('./routes/faq.routes');
 const contactRoutes = require('./routes/contact.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const activityRoutes = require('./routes/activity.routes');
 
 const app = express();
 
@@ -111,8 +112,9 @@ app.use('/api/admin', partnerRoutes);
 // Contact forms + admin views
 app.use('/api', contactRoutes);
 
-// Dashboard
+// Dashboard + Activity Log
 app.use('/api/admin/dashboard', dashboardRoutes);
+app.use('/api/admin/activity', activityRoutes);
 
 // ============================================================
 // 404 + ERROR HANDLING

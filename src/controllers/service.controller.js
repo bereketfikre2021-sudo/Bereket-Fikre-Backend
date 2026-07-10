@@ -9,6 +9,7 @@ const { generateUniqueSlug } = require('../utils/slugify');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const logger = require('../utils/logger');
+const { resolveActiveAction } = require('../utils/activityLog');
 
 // GET /api/services  (public)
 // Returns services in the exact structure expected by ServicesModal.jsx
@@ -124,6 +125,12 @@ const createService = async (req, res, next) => {
     });
 
     logger.info(`Service created: ${service.id} - ${service.title}`);
+    req.logActivity?.({
+      action: 'CREATED',
+      entity: 'Service',
+      entityId: service.id,
+      entityName: service.title,
+    });
     return created(res, service, 'Service created successfully');
   } catch (err) {
     next(err);
@@ -190,6 +197,13 @@ const updateService = async (req, res, next) => {
       },
     });
 
+    req.logActivity?.({
+      action: isActive !== undefined ? resolveActiveAction(existing, isActive) : 'UPDATED',
+      entity: 'Service',
+      entityId: updated.id,
+      entityName: updated.title,
+    });
+
     return success(res, updated, 'Service updated successfully');
   } catch (err) {
     next(err);
@@ -219,6 +233,12 @@ const deleteService = async (req, res, next) => {
     await prisma.service.delete({ where: { id } });
 
     logger.info(`Service deleted: ${id}`);
+    req.logActivity?.({
+      action: 'DELETED',
+      entity: 'Service',
+      entityId: id,
+      entityName: service.title,
+    });
     return success(res, null, 'Service deleted successfully');
   } catch (err) {
     next(err);

@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 const env = require('../config/env');
 const { error } = require('../utils/response');
+const { logActivity } = require('../utils/activityLog');
 
 /**
  * Verify access token and attach admin to req.admin
@@ -51,6 +52,7 @@ const authenticate = async (req, res, next) => {
     }
 
     req.admin = admin;
+    req.logActivity = (params) => logActivity(req, params);
     next();
   } catch (err) {
     next(err);
