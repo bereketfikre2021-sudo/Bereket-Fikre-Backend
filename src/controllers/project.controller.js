@@ -7,8 +7,8 @@ const { success, created, error, paginated } = require('../utils/response');
 const { generateUniqueSlug } = require('../utils/slugify');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
+const { logActivity } = require('../utils/activity');
 const logger = require('../utils/logger');
-const { resolveContentAction } = require('../utils/activityLog');
 
 // GET /api/projects  (public)
 const getProjects = async (req, res, next) => {
@@ -122,12 +122,7 @@ const createProject = async (req, res, next) => {
     });
 
     logger.info(`Project created: ${project.id} - ${project.title}`);
-    req.logActivity?.({
-      action: project.status === 'PUBLISHED' ? 'PUBLISHED' : 'CREATED',
-      entity: 'Project',
-      entityId: project.id,
-      entityName: project.title,
-    });
+    req.logActivity('CREATED', 'Project', project.id, project.title);
     return created(res, project, 'Project created successfully');
   } catch (err) {
     next(err);
@@ -187,13 +182,7 @@ const updateProject = async (req, res, next) => {
       include: { galleryImages: { orderBy: { order: 'asc' } } },
     });
 
-    req.logActivity?.({
-      action: status ? resolveContentAction(existing, status) : 'UPDATED',
-      entity: 'Project',
-      entityId: updated.id,
-      entityName: updated.title,
-    });
-
+    req.logActivity(status && status !== existing.status ? (status === 'PUBLISHED' ? 'PUBLISHED' : 'UNPUBLISHED') : 'UPDATED', 'Project', updated.id, updated.title);
     return success(res, updated, 'Project updated successfully');
   } catch (err) {
     next(err);
@@ -224,12 +213,7 @@ const deleteProject = async (req, res, next) => {
     await prisma.project.delete({ where: { id } });
 
     logger.info(`Project deleted: ${id}`);
-    req.logActivity?.({
-      action: 'DELETED',
-      entity: 'Project',
-      entityId: id,
-      entityName: project.title,
-    });
+    req.logActivity('DELETED', 'Project', id, project.title);
     return success(res, null, 'Project deleted successfully');
   } catch (err) {
     next(err);

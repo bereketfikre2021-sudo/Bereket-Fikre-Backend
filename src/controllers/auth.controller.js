@@ -11,6 +11,7 @@ const env = require('../config/env');
 const { success, error } = require('../utils/response');
 const { deleteAsset } = require('../services/upload.service');
 const logger = require('../utils/logger');
+const { logActivity } = require('../utils/activity');
 
 /**
  * Generate access token
@@ -63,6 +64,7 @@ const login = async (req, res, next) => {
     const refreshToken = await generateRefreshToken(admin.id);
 
     logger.info(`Admin login: ${admin.email}`);
+    logActivity({ admin: { id: admin.id, name: admin.name }, action: 'LOGIN', entity: 'Auth', entityName: admin.email });
 
     return success(res, {
       accessToken,

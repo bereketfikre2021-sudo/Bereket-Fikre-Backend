@@ -12,6 +12,7 @@ const env = require('./config/env');
 const logger = require('./utils/logger');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const activityLogger = require('./middleware/activityLogger');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -22,7 +23,6 @@ const partnerRoutes = require('./routes/partner.routes');
 const faqRoutes = require('./routes/faq.routes');
 const contactRoutes = require('./routes/contact.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
-const activityRoutes = require('./routes/activity.routes');
 
 const app = express();
 
@@ -76,6 +76,9 @@ app.set('trust proxy', 1);
 // General rate limiting
 app.use('/api', generalLimiter);
 
+// Attach req.logActivity to every request
+app.use(activityLogger);
+
 // ============================================================
 // HEALTH CHECK
 // ============================================================
@@ -112,9 +115,8 @@ app.use('/api/admin', partnerRoutes);
 // Contact forms + admin views
 app.use('/api', contactRoutes);
 
-// Dashboard + Activity Log
+// Dashboard
 app.use('/api/admin/dashboard', dashboardRoutes);
-app.use('/api/admin/activity', activityRoutes);
 
 // ============================================================
 // 404 + ERROR HANDLING

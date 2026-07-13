@@ -40,7 +40,7 @@ const getDashboardStats = async (req, res, next) => {
     ]);
 
     // Recent inbox + admin activity
-    const [recentContacts, recentRequests, adminActivity] = await Promise.all([
+    const [recentContacts, recentRequests, adminActivity, activityLog] = await Promise.all([
       prisma.contactSubmission.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
@@ -56,6 +56,10 @@ const getDashboardStats = async (req, res, next) => {
       }),
       prisma.activityLog.findMany({
         take: 10,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.activityLog.findMany({
+        take: 20,
         orderBy: { createdAt: 'desc' },
       }),
     ]);
@@ -98,6 +102,7 @@ const getDashboardStats = async (req, res, next) => {
         contacts: recentContacts,
         projectRequests: recentRequests,
         adminActions: adminActivity,
+        activityLog,
       },
     });
   } catch (err) {

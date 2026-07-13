@@ -6,7 +6,6 @@ const prisma = require('../config/database');
 const { success, created, error, paginated } = require('../utils/response');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const logger = require('../utils/logger');
-const { resolveActiveAction } = require('../utils/activityLog');
 
 // GET /api/faqs  (public)
 const getFaqs = async (req, res, next) => {
@@ -63,12 +62,7 @@ const createFaq = async (req, res, next) => {
     });
 
     logger.info(`FAQ created: ${faq.id}`);
-    req.logActivity?.({
-      action: 'CREATED',
-      entity: 'FAQ',
-      entityId: faq.id,
-      entityName: faq.question,
-    });
+    req.logActivity('CREATED', 'FAQ', faq.id, faq.question.substring(0,50));
     return created(res, faq, 'FAQ created successfully');
   } catch (err) {
     next(err);
@@ -96,12 +90,7 @@ const updateFaq = async (req, res, next) => {
       },
     });
 
-    req.logActivity?.({
-      action: isActive !== undefined ? resolveActiveAction(existing, isActive) : 'UPDATED',
-      entity: 'FAQ',
-      entityId: updated.id,
-      entityName: updated.question,
-    });
+    req.logActivity('UPDATED', 'FAQ', updated.id, updated.question.substring(0,50));
 
     return success(res, updated, 'FAQ updated successfully');
   } catch (err) {
@@ -120,12 +109,7 @@ const deleteFaq = async (req, res, next) => {
     await prisma.faq.delete({ where: { id } });
 
     logger.info(`FAQ deleted: ${id}`);
-    req.logActivity?.({
-      action: 'DELETED',
-      entity: 'FAQ',
-      entityId: id,
-      entityName: faq.question,
-    });
+    req.logActivity('DELETED', 'FAQ', id, faq.question.substring(0,50));
     return success(res, null, 'FAQ deleted successfully');
   } catch (err) {
     next(err);
