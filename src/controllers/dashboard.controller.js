@@ -64,6 +64,39 @@ const getDashboardStats = async (req, res, next) => {
       }),
     ]);
 
+    // ── 30-day trend data (contacts + requests per day) ──────────────────────
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+    const [contactTrend, requestTrend] = await Promise.all([
+      prisma.contactSubmission.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.projectRequest.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // Build day-by-day counts for the last 30 days
+    const buildDailyTrend = (items) => {
+      const counts = {};
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(thirtyDaysAgo);
+        d.setDate(d.getDate() + i);
+        counts[d.toISOString().slice(0, 10)] = 0;
+      }
+      items.forEach(({ createdAt }) => {
+        const key = new Date(createdAt).toISOString().slice(0, 10);
+        if (key in counts) counts[key]++;
+      });
+      return Object.entries(counts).map(([date, count]) => ({ date, count }));
+    };
+
     return success(res, {
       stats: {
         projects: {
@@ -71,31 +104,13 @@ const getDashboardStats = async (req, res, next) => {
           published: publishedProjectCount,
           draft: projectCount - publishedProjectCount,
         },
-        services: {
-          total: serviceCount,
-        },
-        insights: {
-          total: insightCount,
-          caseStudies: caseStudyCount,
-          blogPosts: blogCount,
-        },
-        partners: {
-          total: partnerCount,
-        },
-        testimonials: {
-          total: testimonialCount,
-        },
-        faqs: {
-          total: faqCount,
-        },
-        contacts: {
-          total: contactCount,
-          new: newContactCount,
-        },
-        projectRequests: {
-          total: projectRequestCount,
-          new: newRequestCount,
-        },
+        services: { total: serviceCount },
+        insights: { total: insightCount, caseStudies: caseStudyCount, blogPosts: blogCount },
+        partners: { total: partnerCount },
+        testimonials: { total: testimonialCount },
+        faqs: { total: faqCount },
+        contacts: { total: contactCount, new: newContactCount },
+        projectRequests: { total: projectRequestCount, new: newRequestCount },
         unread: newContactCount + newRequestCount,
       },
       recentActivity: {
@@ -103,6 +118,10 @@ const getDashboardStats = async (req, res, next) => {
         projectRequests: recentRequests,
         adminActions: adminActivity,
         activityLog,
+      },
+      trends: {
+        contacts: buildDailyTrend(contactTrend),
+        requests: buildDailyTrend(requestTrend),
       },
     });
   } catch (err) {

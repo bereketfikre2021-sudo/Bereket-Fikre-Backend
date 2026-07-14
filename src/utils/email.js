@@ -91,4 +91,37 @@ const sendProjectRequestNotification = async (req) => {
   }
 };
 
-module.exports = { sendContactNotification, sendProjectRequestNotification };
+module.exports = { sendContactNotification, sendProjectRequestNotification, sendReplyEmail };
+
+/**
+ * Send a direct reply email from admin to a contact or project request sender
+ */
+async function sendReplyEmail({ to, toName, subject, originalMessage, replyMessage }) {
+  const t = getTransporter();
+  if (!t) {
+    const err = new Error('Email not configured — add EMAIL_USER and EMAIL_PASS to your .env');
+    logger.error(err.message);
+    throw err;
+  }
+
+  await t.sendMail({
+    from: `"Bereket Fikre" <${env.EMAIL_FROM}>`,
+    to: `${toName} <${to}>`,
+    subject,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#333">
+        <p>Hi ${toName},</p>
+        <div style="white-space:pre-wrap;line-height:1.6">${replyMessage.replace(/\n/g, '<br>')}</div>
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+        <p style="font-size:12px;color:#888">
+          <strong>Your original message:</strong><br/>
+          <em style="white-space:pre-wrap">${originalMessage}</em>
+        </p>
+        <p style="font-size:12px;color:#888;margin-top:16px">
+          — Bereket Fikre · <a href="https://bereketfikre.et">bereketfikre.et</a>
+        </p>
+      </div>
+    `,
+  });
+  logger.info(`Reply sent to ${to}`);
+}

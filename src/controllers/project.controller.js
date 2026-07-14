@@ -189,6 +189,48 @@ const updateProject = async (req, res, next) => {
   }
 };
 
+// POST /api/admin/projects/:id/duplicate  (protected)
+const duplicateProject = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const original = await prisma.project.findUnique({
+      where: { id },
+      include: { galleryImages: { orderBy: { order: 'asc' } } },
+    });
+    if (!original) return error(res, 'Project not found.', 404);
+
+    const newTitle = `${original.title} (Copy)`;
+    const slug = await generateUniqueSlug(newTitle, 'project');
+
+    const duplicate = await prisma.project.create({
+      data: {
+        title:            newTitle,
+        slug,
+        category:         original.category,
+        shortDescription: original.shortDescription,
+        fullDescription:  original.fullDescription,
+        thumbnail:        original.thumbnail,
+        thumbnailPublicId: original.thumbnailPublicId,
+        technologies:     original.technologies,
+        liveUrl:          original.liveUrl,
+        githubUrl:        original.githubUrl,
+        featured:         false,
+        displayOrder:     original.displayOrder + 1,
+        status:           'DRAFT',
+        seoTitle:         original.seoTitle,
+        seoDescription:   original.seoDescription,
+      },
+      include: { galleryImages: true },
+    });
+
+    logger.info(`Project duplicated: ${duplicate.id} from ${id}`);
+    req.logActivity('CREATED', 'Project', duplicate.id, duplicate.title);
+    return created(res, duplicate, 'Project duplicated successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 // DELETE /api/admin/projects/:id  (protected)
 const deleteProject = async (req, res, next) => {
   try {
@@ -293,6 +335,7 @@ const reorderProjects = async (req, res, next) => {
 module.exports = {
   getProjects, getProject,
   createProject, updateProject, deleteProject,
+  duplicateProject,
   addGalleryImage, deleteGalleryImage,
   reorderProjects,
 };

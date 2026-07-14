@@ -192,6 +192,44 @@ const updateInsight = async (req, res, next) => {
   }
 };
 
+// POST /api/admin/insights/:id/duplicate  (protected)
+const duplicateInsight = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const original = await prisma.insight.findUnique({ where: { id } });
+    if (!original) return error(res, 'Insight not found.', 404);
+
+    const newTitle = `${original.title} (Copy)`;
+    const slug = await generateUniqueSlug(newTitle, 'insight');
+
+    const duplicate = await prisma.insight.create({
+      data: {
+        type:           original.type,
+        title:          newTitle,
+        slug,
+        coverImage:     original.coverImage,
+        coverPublicId:  original.coverPublicId,
+        excerpt:        original.excerpt,
+        content:        original.content,
+        category:       original.category,
+        tags:           original.tags,
+        author:         original.author,
+        readingTime:    original.readingTime,
+        publishDate:    null,
+        status:         'DRAFT',
+        seoTitle:       original.seoTitle,
+        seoDescription: original.seoDescription,
+      },
+    });
+
+    logger.info(`Insight duplicated: ${duplicate.id} from ${id}`);
+    req.logActivity('CREATED', 'Insight', duplicate.id, duplicate.title);
+    return created(res, duplicate, 'Insight duplicated successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 // DELETE /api/admin/insights/:id  (protected)
 const deleteInsight = async (req, res, next) => {
   try {
@@ -214,4 +252,4 @@ const deleteInsight = async (req, res, next) => {
   }
 };
 
-module.exports = { getInsights, getInsight, createInsight, updateInsight, deleteInsight };
+module.exports = { getInsights, getInsight, createInsight, updateInsight, deleteInsight, duplicateInsight };

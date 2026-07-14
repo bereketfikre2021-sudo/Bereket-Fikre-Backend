@@ -2,6 +2,7 @@ const { Router } = require('express');
 const {
   getProjects, getProject,
   createProject, updateProject, deleteProject,
+  duplicateProject,
   addGalleryImage, deleteGalleryImage,
   reorderProjects,
 } = require('../controllers/project.controller');
@@ -12,7 +13,6 @@ const { upload }        = require('../services/upload.service');
 
 const router = Router();
 
-// Thumbnail + gallery images both go to bereketfikre/featured-projects/
 const uploadThumb   = upload('thumbnail', 'FEATURED_PROJECTS');
 const uploadGallery = upload('image',     'FEATURED_PROJECTS');
 
@@ -21,12 +21,13 @@ router.get('/',          listRules, validate, getProjects);
 router.get('/:idOrSlug', getProject);
 
 // ——— Protected ———
-router.post('/',       authenticate, ...uploadThumb,   projectRules, validate, createProject);
-router.put('/reorder', authenticate, reorderProjects);
-router.put('/:id',     authenticate, ...uploadThumb,   projectRules, validate, updateProject);
-router.delete('/:id',  authenticate, deleteProject);
+router.post('/',              authenticate, ...uploadThumb, projectRules, validate, createProject);
+router.put('/reorder',        authenticate, reorderProjects);
+router.post('/:id/duplicate', authenticate, duplicateProject);
+router.put('/:id',            authenticate, ...uploadThumb, projectRules, validate, updateProject);
+router.delete('/:id',         authenticate, deleteProject);
 
-// Inline thumbnail-only update (no validation rules — image field only)
+// Inline thumbnail-only update
 router.put('/:id/thumbnail', authenticate, ...uploadThumb, updateProject);
 
 // Gallery images

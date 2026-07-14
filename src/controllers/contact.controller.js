@@ -176,6 +176,30 @@ const deleteContact = async (req, res, next) => {
   }
 };
 
+// GET /api/admin/contacts/export  — CSV download
+const exportContacts = async (req, res, next) => {
+  try {
+    const contacts = await prisma.contactSubmission.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = ['Name', 'Email', 'Subject', 'Message', 'Status', 'Notes', 'Date'];
+    const rows = contacts.map((c) => [
+      escape(c.name), escape(c.email), escape(c.subject),
+      escape(c.message), escape(c.status), escape(c.notes || ''),
+      escape(new Date(c.createdAt).toISOString()),
+    ]);
+
+    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="contacts.csv"');
+    return res.send(csv);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ============================================================
 // ADMIN — Project Requests Management
 // ============================================================
@@ -257,9 +281,115 @@ const deleteProjectRequest = async (req, res, next) => {
   }
 };
 
+// GET /api/admin/project-requests/export  — CSV download
+const exportProjectRequests = async (req, res, next) => {
+  try {
+    const requests = await prisma.projectRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = ['First Name', 'Last Name', 'Email', 'Phone', 'Company',
+      'Service', 'Budget', 'Timeline', 'Description', 'Preferred Contact', 'Status', 'Notes', 'Date'];
+    const rows = requests.map((r) => [
+      escape(r.firstName), escape(r.lastName), escape(r.email),
+      escape(r.phone || ''), escape(r.company || ''),
+      escape(r.serviceNeeded), escape(r.budgetRange), escape(r.timeline),
+      escape(r.projectDescription), escape(r.preferredContactMethod),
+      escape(r.status), escape(r.notes || ''),
+      escape(new Date(r.createdAt).toISOString()),
+    ]);
+
+    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="project-requests.csv"');
+    return res.send(csv);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ============================================================
+// ADMIN — Reply via Email
+// ============================================================
+
+// POST /api/admin/contacts/:id/reply
+const replyToContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { replyMessage } = req.body;
+
+    if (!replyMessage?.trim()) return error(res, 'Reply message is required.', 400);
+
+    const contact = await prisma.contactSubmission.findUnique({ where: { id } });
+    if (!contact) return error(res, 'Contact submission not found.', 404);
+
+    const { sendReplyEmail } = require('../utils/email');
+    await sendReplyEmail({
+      to: contact.email,
+      toName: contact.name,
+      subject: `Re: ${contact.subject}`,
+      originalMessage: contact.message,
+      replyMessage: replyMessage.trim(),
+    });
+
+    // Mark as replied and save note
+    const updated = await prisma.contactSubmission.update({
+      where: { id },
+      data: {
+        status: 'REPLIED',
+        notes: `[Replied] ${replyMessage.trim()}`,
+      },
+    });
+
+    logger.info(`Reply sent to contact: ${contact.email}`);
+    req.logActivity('REPLIED', 'Contact', id, contact.name);
+    return success(res, updated, 'Reply sent successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/admin/project-requests/:id/reply
+const replyToProjectRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { replyMessage } = req.body;
+
+    if (!replyMessage?.trim()) return error(res, 'Reply message is required.', 400);
+
+    const request = await prisma.projectRequest.findUnique({ where: { id } });
+    if (!request) return error(res, 'Project request not found.', 404);
+
+    const { sendReplyEmail } = require('../utils/email');
+    await sendReplyEmail({
+      to: request.email,
+      toName: `${request.firstName} ${request.lastName}`,
+      subject: `Re: Your Project Request — ${request.serviceNeeded}`,
+      originalMessage: request.projectDescription,
+      replyMessage: replyMessage.trim(),
+    });
+
+    const updated = await prisma.projectRequest.update({
+      where: { id },
+      data: {
+        status: 'REPLIED',
+        notes: `[Replied] ${replyMessage.trim()}`,
+      },
+    });
+
+    logger.info(`Reply sent to project request: ${request.email}`);
+    req.logActivity('REPLIED', 'ProjectRequest', id, `${request.firstName} ${request.lastName}`);
+    return success(res, updated, 'Reply sent successfully');
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   submitContact,
   submitProjectRequest,
-  getContacts, getContact, updateContactStatus, deleteContact,
-  getProjectRequests, getProjectRequest, updateProjectRequestStatus, deleteProjectRequest,
+  getContacts, getContact, updateContactStatus, deleteContact, exportContacts,
+  getProjectRequests, getProjectRequest, updateProjectRequestStatus, deleteProjectRequest, exportProjectRequests,
+  replyToContact, replyToProjectRequest,
 };
