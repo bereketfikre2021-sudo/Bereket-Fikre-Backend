@@ -149,14 +149,17 @@ const getContact = async (req, res, next) => {
 const updateContactStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, notes } = req.body;
 
     const validStatuses = ['NEW', 'READ', 'REPLIED', 'ARCHIVED'];
     if (!validStatuses.includes(status)) {
       return error(res, `Status must be one of: ${validStatuses.join(', ')}`, 400);
     }
 
-    const updated = await prisma.contactSubmission.update({ where: { id }, data: { status } });
+    const updated = await prisma.contactSubmission.update({
+      where: { id },
+      data: { status, ...(notes !== undefined && { notes }) },
+    });
     return success(res, updated, 'Status updated');
   } catch (err) {
     next(err);

@@ -246,6 +246,7 @@ model ContactSubmission {
   message   String          @db.Text
   formType  String          @default("contact")
   status    SubmissionStatus @default(NEW)
+  notes     String?         @db.Text  // Admin notes
   ipAddress String?
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt

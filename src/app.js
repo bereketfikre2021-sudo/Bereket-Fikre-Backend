@@ -37,13 +37,24 @@ app.use(helmet({
 // ============================================================
 // CORS
 // ============================================================
+// Extra origins can be added via CORS_EXTRA_ORIGINS="url1,url2" in .env
+const extraOrigins = process.env.CORS_EXTRA_ORIGINS
+  ? process.env.CORS_EXTRA_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : [];
+
 const allowedOrigins = [
   env.FRONTEND_URL,
   env.ADMIN_URL,
+  // Common local dev ports
   'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
   'http://127.0.0.1:5173',
+  ...extraOrigins,
 ];
 
 app.use(cors({
