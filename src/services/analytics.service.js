@@ -45,7 +45,7 @@ let _client = null;
 function getClient() {
   if (_client) return _client;
   if (!CLIENT_EMAIL || !PRIVATE_KEY) {
-    throw new Error('GA credentials not configured (GA_CLIENT_EMAIL / GA_PRIVATE_KEY missing)');
+    throw new Error(`GA credentials missing — CLIENT_EMAIL: ${!!CLIENT_EMAIL}, PRIVATE_KEY: ${!!PRIVATE_KEY}`);
   }
   _client = new BetaAnalyticsDataClient({
     credentials: { client_email: CLIENT_EMAIL, private_key: PRIVATE_KEY },
@@ -56,7 +56,7 @@ function getClient() {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function prop() {
-  if (!PROPERTY_ID) throw new Error('GA_PROPERTY_ID env var not set');
+  if (!PROPERTY_ID) throw new Error(`GA_PROPERTY_ID env var not set (value: "${PROPERTY_ID}")`);
   return `properties/${PROPERTY_ID}`;
 }
 

@@ -14,9 +14,8 @@ async function run(res, fn) {
     const data = await fn();
     return success(res, data);
   } catch (err) {
-    logger.error('GA API error:', err.message);
-    // Don't expose credential details to the client
-    return error(res, 'Analytics data unavailable. Check GA credentials.', 503);
+    logger.error(`GA API error: ${err.message || err.code || JSON.stringify(err)}`);
+    return error(res, `Analytics error: ${err.message || 'Unknown error'}`, 503);
   }
 }
 
@@ -68,8 +67,8 @@ const getAll = async (req, res) => {
       realtime,
     });
   } catch (err) {
-    logger.error('GA API error (all):', err.message);
-    return error(res, 'Analytics data unavailable. Check GA credentials.', 503);
+    logger.error(`GA API error (all): ${err.message || err.code || JSON.stringify(err)}`);
+    return error(res, `Analytics error: ${err.message || 'Unknown error'}`, 503);
   }
 };
 
