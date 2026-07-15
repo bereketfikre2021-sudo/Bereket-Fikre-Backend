@@ -1,7 +1,7 @@
 const { body } = require('express-validator');
 
 const sharedRules = [
-  body('tags').optional().isArray(),
+  // tags comes as repeated FormData fields — skip isArray(), controller handles coercion
   body('author').optional().trim(),
   body('readingTime').optional({ checkFalsy: true }).isInt({ min: 1 }).toInt(),
   body('publishDate').optional({ checkFalsy: true }).isISO8601().withMessage('Invalid publish date.'),

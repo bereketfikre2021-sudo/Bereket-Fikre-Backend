@@ -2,7 +2,7 @@ const { body, query } = require('express-validator');
 
 // Shared optional field rules (used in both create and update)
 const sharedRules = [
-  body('technologies').optional().isArray(),
+  // technologies comes as repeated FormData fields — skip isArray(), controller handles coercion
   body('liveUrl').optional({ checkFalsy: true }).isURL().withMessage('Invalid live URL.'),
   body('githubUrl').optional({ checkFalsy: true }).isURL().withMessage('Invalid GitHub URL.'),
   body('featured').optional().isBoolean({ strict: false }),

@@ -10,6 +10,19 @@ const { parsePagination, parseSort } = require('../utils/pagination');
 const { logActivity } = require('../utils/activity');
 const logger = require('../utils/logger');
 
+/**
+ * Normalise a FormData field that may be:
+ *   - undefined  → []  (field not sent)
+ *   - string     → [string]  (single value)
+ *   - string[]   → string[]  (multiple values, express already parsed)
+ */
+const toArray = (value) => {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === 'string') return value ? [value] : [];
+  return [];
+};
+
 // GET /api/projects  (public)
 const getProjects = async (req, res, next) => {
   try {
@@ -109,7 +122,7 @@ const createProject = async (req, res, next) => {
         fullDescription: fullDescription.trim(),
         thumbnail,
         thumbnailPublicId,
-        technologies: Array.isArray(technologies) ? technologies : [],
+        technologies: toArray(technologies),
         liveUrl: liveUrl || null,
         githubUrl: githubUrl || null,
         featured: featured === true || featured === 'true',
@@ -170,7 +183,7 @@ const updateProject = async (req, res, next) => {
         ...(fullDescription && { fullDescription: fullDescription.trim() }),
         thumbnail,
         thumbnailPublicId,
-        ...(technologies !== undefined && { technologies: Array.isArray(technologies) ? technologies : [] }),
+        ...(technologies !== undefined && { technologies: toArray(technologies) }),
         liveUrl: liveUrl !== undefined ? (liveUrl || null) : existing.liveUrl,
         githubUrl: githubUrl !== undefined ? (githubUrl || null) : existing.githubUrl,
         ...(featured !== undefined && { featured: featured === true || featured === 'true' }),

@@ -8,6 +8,13 @@ const { success, created, error, paginated } = require('../utils/response');
 const { generateUniqueSlug } = require('../utils/slugify');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
+
+const toArray = (value) => {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === 'string') return value ? [value] : [];
+  return [];
+};
 const logger = require('../utils/logger');
 
 /**
@@ -113,7 +120,7 @@ const createInsight = async (req, res, next) => {
         excerpt: excerpt.trim(),
         content: content.trim(),
         category: category.trim(),
-        tags: Array.isArray(tags) ? tags : [],
+        tags: toArray(tags),
         author: author?.trim() || 'Bereket Fikre',
         readingTime: calculatedReadingTime,
         publishDate: publishDate ? new Date(publishDate) : null,
@@ -174,7 +181,7 @@ const updateInsight = async (req, res, next) => {
         ...(excerpt && { excerpt: excerpt.trim() }),
         ...(content && { content: content.trim() }),
         ...(category && { category: category.trim() }),
-        ...(tags !== undefined && { tags: Array.isArray(tags) ? tags : [] }),
+        ...(tags !== undefined && { tags: toArray(tags) }),
         ...(author !== undefined && { author: author?.trim() || 'Bereket Fikre' }),
         readingTime: calculatedReadingTime,
         publishDate: publishDate !== undefined ? (publishDate ? new Date(publishDate) : null) : existing.publishDate,

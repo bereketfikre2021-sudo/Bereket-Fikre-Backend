@@ -2,8 +2,7 @@ const { body } = require('express-validator');
 
 const sharedRules = [
   body('serviceNumber').optional().trim(),
-  body('bulletPoints').optional().isArray().withMessage('Bullet points must be an array.'),
-  body('technologies').optional().isArray(),
+  // bulletPoints and technologies come as repeated FormData fields — skip isArray(), controller handles coercion
   body('displayOrder').optional().isInt({ min: 0 }).toInt(),
   body('featured').optional().isBoolean({ strict: false }),
   body('isActive').optional().isBoolean({ strict: false }),

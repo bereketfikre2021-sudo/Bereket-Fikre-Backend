@@ -10,6 +10,13 @@ const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const logger = require('../utils/logger');
 
+const toArray = (value) => {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === 'string') return value ? [value] : [];
+  return [];
+};
+
 // GET /api/services  (public)
 // Returns services in the exact structure expected by ServicesModal.jsx
 const getServices = async (req, res, next) => {
@@ -103,10 +110,10 @@ const createService = async (req, res, next) => {
         iconClass: iconClass || null,
         shortDescription: shortDescription.trim(),
         fullDescription: fullDescription?.trim() || null,
-        bulletPoints: Array.isArray(bulletPoints) ? bulletPoints : [],
+        bulletPoints: toArray(bulletPoints),
         featuredImage,
         featuredImagePublicId,
-        technologies: Array.isArray(technologies) ? technologies : [],
+        technologies: toArray(technologies),
         ctaText: ctaText || 'Request a Quote',
         ctaLink: ctaLink || '#contact',
         displayOrder: parseInt(displayOrder, 10) || 0,
@@ -171,10 +178,10 @@ const updateService = async (req, res, next) => {
         ...(iconClass !== undefined && { iconClass: iconClass || null }),
         ...(shortDescription && { shortDescription: shortDescription.trim() }),
         ...(fullDescription !== undefined && { fullDescription: fullDescription?.trim() || null }),
-        ...(bulletPoints !== undefined && { bulletPoints: Array.isArray(bulletPoints) ? bulletPoints : [] }),
+        ...(bulletPoints !== undefined && { bulletPoints: toArray(bulletPoints) }),
         featuredImage,
         featuredImagePublicId,
-        ...(technologies !== undefined && { technologies: Array.isArray(technologies) ? technologies : [] }),
+        ...(technologies !== undefined && { technologies: toArray(technologies) }),
         ...(ctaText !== undefined && { ctaText }),
         ...(ctaLink !== undefined && { ctaLink }),
         ...(displayOrder !== undefined && { displayOrder: parseInt(displayOrder, 10) || 0 }),
