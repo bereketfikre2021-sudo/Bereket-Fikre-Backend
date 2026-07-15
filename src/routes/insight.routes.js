@@ -5,7 +5,7 @@ const {
 } = require('../controllers/insight.controller');
 const { authenticate }  = require('../middleware/auth');
 const validate          = require('../middleware/validate');
-const { insightRules }  = require('../validators/insight.validator');
+const { createInsightRules, updateInsightRules } = require('../validators/insight.validator');
 const { upload }        = require('../services/upload.service');
 
 const router = Router();
@@ -24,9 +24,9 @@ router.get('/',          getInsights);
 router.get('/:idOrSlug', getInsight);
 
 // ——— Protected ———
-router.post('/',              authenticate, ...uploadCover, insightRules, validate, createInsight);
+router.post('/',              authenticate, ...uploadCover, createInsightRules, validate, createInsight);
 router.post('/:id/duplicate', authenticate, duplicateInsight);
-router.put('/:id',            authenticate, ...uploadCover, insightRules, validate, updateInsight);
+router.put('/:id',            authenticate, ...uploadCover, updateInsightRules, validate, updateInsight);
 router.delete('/:id',         authenticate, deleteInsight);
 
 // Inline cover-image-only update

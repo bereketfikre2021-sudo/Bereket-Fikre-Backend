@@ -1,9 +1,6 @@
 const { body } = require('express-validator');
 
-const serviceRules = [
-  body('title').trim().notEmpty().withMessage('Title is required.'),
-  body('category').trim().notEmpty().withMessage('Category is required.'),
-  body('shortDescription').trim().notEmpty().withMessage('Short description is required.'),
+const sharedRules = [
   body('serviceNumber').optional().trim(),
   body('bulletPoints').optional().isArray().withMessage('Bullet points must be an array.'),
   body('technologies').optional().isArray(),
@@ -16,6 +13,22 @@ const serviceRules = [
   body('seoDescription').optional().isLength({ max: 160 }),
 ];
 
+// CREATE — required fields enforced
+const createServiceRules = [
+  body('title').trim().notEmpty().withMessage('Title is required.'),
+  body('category').trim().notEmpty().withMessage('Category is required.'),
+  body('shortDescription').trim().notEmpty().withMessage('Short description is required.'),
+  ...sharedRules,
+];
+
+// UPDATE — all fields optional
+const updateServiceRules = [
+  body('title').optional().trim().notEmpty().withMessage('Title cannot be empty.'),
+  body('category').optional().trim().notEmpty().withMessage('Category cannot be empty.'),
+  body('shortDescription').optional().trim().notEmpty().withMessage('Short description cannot be empty.'),
+  ...sharedRules,
+];
+
 const processRules = [
   body('steps').isArray({ min: 1 }).withMessage('Steps must be a non-empty array.'),
   body('steps.*.stepNumber').isInt({ min: 1 }).withMessage('Each step needs a step number.'),
@@ -23,4 +36,4 @@ const processRules = [
   body('steps.*.description').trim().notEmpty().withMessage('Each step needs a description.'),
 ];
 
-module.exports = { serviceRules, processRules };
+module.exports = { createServiceRules, updateServiceRules, processRules };

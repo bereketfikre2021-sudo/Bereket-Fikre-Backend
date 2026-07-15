@@ -8,7 +8,7 @@ const {
 } = require('../controllers/project.controller');
 const { authenticate }  = require('../middleware/auth');
 const validate          = require('../middleware/validate');
-const { projectRules, listRules } = require('../validators/project.validator');
+const { createProjectRules, updateProjectRules, listRules } = require('../validators/project.validator');
 const { upload }        = require('../services/upload.service');
 
 const router = Router();
@@ -21,10 +21,10 @@ router.get('/',          listRules, validate, getProjects);
 router.get('/:idOrSlug', getProject);
 
 // ——— Protected ———
-router.post('/',              authenticate, ...uploadThumb, projectRules, validate, createProject);
+router.post('/',              authenticate, ...uploadThumb, createProjectRules, validate, createProject);
 router.put('/reorder',        authenticate, reorderProjects);
 router.post('/:id/duplicate', authenticate, duplicateProject);
-router.put('/:id',            authenticate, ...uploadThumb, projectRules, validate, updateProject);
+router.put('/:id',            authenticate, ...uploadThumb, updateProjectRules, validate, updateProject);
 router.delete('/:id',         authenticate, deleteProject);
 
 // Inline thumbnail-only update

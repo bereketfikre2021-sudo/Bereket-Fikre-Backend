@@ -8,7 +8,7 @@ const {
 } = require('../controllers/service.controller');
 const { authenticate }  = require('../middleware/auth');
 const validate          = require('../middleware/validate');
-const { serviceRules, processRules } = require('../validators/service.validator');
+const { createServiceRules, updateServiceRules, processRules } = require('../validators/service.validator');
 const { upload }        = require('../services/upload.service');
 
 const router = Router();
@@ -22,9 +22,9 @@ router.get('/',          getServices);
 router.get('/:idOrSlug', getService);
 
 // ——— Protected ———
-router.post('/',       authenticate, ...uploadFeatured, serviceRules, validate, createService);
+router.post('/',       authenticate, ...uploadFeatured, createServiceRules, validate, createService);
 router.put('/reorder', authenticate, reorderServices);
-router.put('/:id',     authenticate, ...uploadFeatured, serviceRules, validate, updateService);
+router.put('/:id',     authenticate, ...uploadFeatured, updateServiceRules, validate, updateService);
 router.delete('/:id',  authenticate, deleteService);
 
 // Process steps
