@@ -4,8 +4,8 @@ const faqRules = [
   body('question').trim().notEmpty().withMessage('Question is required.').isLength({ max: 300 }),
   body('answer').trim().notEmpty().withMessage('Answer is required.'),
   body('category').optional().trim().isLength({ max: 100 }),
-  body('displayOrder').optional().isInt({ min: 0 }),
-  body('isActive').optional().isBoolean(),
+  body('displayOrder').optional().isInt({ min: 0 }).toInt(),
+  body('isActive').optional().isBoolean({ strict: false }),
 ];
 
 const reorderRules = [

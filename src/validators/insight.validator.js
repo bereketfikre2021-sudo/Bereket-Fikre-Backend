@@ -8,7 +8,7 @@ const insightRules = [
   body('category').trim().notEmpty().withMessage('Category is required.'),
   body('tags').optional().isArray(),
   body('author').optional().trim(),
-  body('readingTime').optional().isInt({ min: 1 }),
+  body('readingTime').optional({ checkFalsy: true }).isInt({ min: 1 }).toInt(),
   body('publishDate').optional({ checkFalsy: true }).isISO8601().withMessage('Invalid publish date.'),
   body('status').optional().isIn(['DRAFT', 'PUBLISHED']),
   body('seoTitle').optional().isLength({ max: 60 }),
