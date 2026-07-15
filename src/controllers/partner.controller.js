@@ -290,7 +290,25 @@ const deleteTestimonial = async (req, res, next) => {
   }
 };
 
+// PUT /api/admin/testimonials/reorder
+const reorderTestimonials = async (req, res, next) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items)) return error(res, 'Items array is required.', 400);
+
+    await Promise.all(
+      items.map(({ id, displayOrder }) =>
+        prisma.testimonial.update({ where: { id }, data: { displayOrder: parseInt(displayOrder, 10) } })
+      )
+    );
+
+    return success(res, null, 'Testimonials reordered');
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getPartners, getPartner, createPartner, updatePartner, deletePartner, reorderPartners,
-  getTestimonials, getTestimonial, createTestimonial, updateTestimonial, deleteTestimonial,
+  getTestimonials, getTestimonial, createTestimonial, updateTestimonial, deleteTestimonial, reorderTestimonials,
 };

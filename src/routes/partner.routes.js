@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const {
   getPartners, getPartner, createPartner, updatePartner, deletePartner, reorderPartners,
-  getTestimonials, getTestimonial, createTestimonial, updateTestimonial, deleteTestimonial,
+  getTestimonials, getTestimonial, createTestimonial, updateTestimonial, deleteTestimonial, reorderTestimonials,
 } = require('../controllers/partner.controller');
 const { authenticate }  = require('../middleware/auth');
 const validate          = require('../middleware/validate');
@@ -33,9 +33,10 @@ router.get('/testimonials',    getTestimonials);
 router.get('/testimonials/:id', getTestimonial);
 
 // ——— Testimonials — Protected ———
-router.post('/testimonials',        authenticate, ...uploadProfile, testimonialRules, validate, createTestimonial);
-router.put('/testimonials/:id',     authenticate, ...uploadProfile, testimonialRules, validate, updateTestimonial);
-router.delete('/testimonials/:id',  authenticate, deleteTestimonial);
+router.post('/testimonials',            authenticate, ...uploadProfile, testimonialRules, validate, createTestimonial);
+router.put('/testimonials/reorder',     authenticate, reorderTestimonials);
+router.put('/testimonials/:id',         authenticate, ...uploadProfile, testimonialRules, validate, updateTestimonial);
+router.delete('/testimonials/:id',      authenticate, deleteTestimonial);
 
 // Inline profile-image-only update (no validation rules)
 router.put('/testimonials/:id/image', authenticate, ...uploadProfile, updateTestimonial);
