@@ -23,6 +23,7 @@ const partnerRoutes = require('./routes/partner.routes');
 const faqRoutes = require('./routes/faq.routes');
 const contactRoutes = require('./routes/contact.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 const app = express();
 
@@ -128,6 +129,9 @@ app.use('/api', contactRoutes);
 
 // Dashboard
 app.use('/api/admin/dashboard', dashboardRoutes);
+
+// Analytics (GA Data API — credentials stay on server)
+app.use('/api/admin/analytics', analyticsRoutes);
 
 // ============================================================
 // 404 + ERROR HANDLING
