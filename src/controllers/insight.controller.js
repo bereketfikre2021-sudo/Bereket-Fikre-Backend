@@ -8,6 +8,7 @@ const { success, created, error, paginated } = require('../utils/response');
 const { generateUniqueSlug } = require('../utils/slugify');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
+const { bustSitemapCache } = require('../routes/sitemap.routes');
 
 const toArray = (value) => {
   if (value === undefined || value === null) return [];
@@ -131,7 +132,7 @@ const createInsight = async (req, res, next) => {
     });
 
     logger.info(`Insight created: ${insight.id} - ${insight.title}`);
-    req.logActivity('CREATED', 'Insight', insight.id, insight.title);
+    bustSitemapCache();
     return created(res, insight, 'Insight created successfully');
   } catch (err) {
     next(err);
@@ -191,8 +192,7 @@ const updateInsight = async (req, res, next) => {
       },
     });
 
-    req.logActivity(req.body.status && req.body.status !== existing.status ? (req.body.status === 'PUBLISHED' ? 'PUBLISHED' : 'UNPUBLISHED') : 'UPDATED', 'Insight', updated.id, updated.title);
-
+    bustSitemapCache();
     return success(res, updated, 'Insight updated successfully');
   } catch (err) {
     next(err);
@@ -230,7 +230,6 @@ const duplicateInsight = async (req, res, next) => {
     });
 
     logger.info(`Insight duplicated: ${duplicate.id} from ${id}`);
-    req.logActivity('CREATED', 'Insight', duplicate.id, duplicate.title);
     return created(res, duplicate, 'Insight duplicated successfully');
   } catch (err) {
     next(err);
@@ -252,7 +251,7 @@ const deleteInsight = async (req, res, next) => {
     await prisma.insight.delete({ where: { id } });
 
     logger.info(`Insight deleted: ${id}`);
-    req.logActivity('DELETED', 'Insight', id, insight.title);
+    bustSitemapCache();
     return success(res, null, 'Insight deleted successfully');
   } catch (err) {
     next(err);

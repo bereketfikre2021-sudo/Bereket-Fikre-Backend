@@ -47,6 +47,7 @@ const FOLDERS = Object.freeze({
   DESIGN_BLOGS:      'bereketfikre/design-blogs',
   TESTIMONIALS:      'bereketfikre/testimonials',
   TRUSTED_PARTNERS:  'bereketfikre/trusted-partners',
+  SITE_CONTENT:      'bereketfikre/site-content',
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,6 +111,11 @@ const getUploadOptions = (folderKey, isSvg = false) => {
     // Trusted partner logos — small, contained, no crop
     [FOLDERS.TRUSTED_PARTNERS]: [
       { width: 400, height: 200, crop: 'limit' },
+    ],
+
+    // Site content images — hero portrait + about photo (tall portrait)
+    [FOLDERS.SITE_CONTENT]: [
+      { width: 1200, height: 1500, crop: 'limit' },
     ],
   };
 

@@ -12,7 +12,6 @@ const env = require('./config/env');
 const logger = require('./utils/logger');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
-const activityLogger = require('./middleware/activityLogger');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -24,6 +23,7 @@ const faqRoutes = require('./routes/faq.routes');
 const contactRoutes = require('./routes/contact.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const settingsRoutes  = require('./routes/settings.routes');
 
 const app = express();
 
@@ -88,9 +88,6 @@ app.set('trust proxy', 1);
 // General rate limiting
 app.use('/api', generalLimiter);
 
-// Attach req.logActivity to every request
-app.use(activityLogger);
-
 // ============================================================
 // HEALTH CHECK
 // ============================================================
@@ -132,6 +129,14 @@ app.use('/api/admin/dashboard', dashboardRoutes);
 
 // Analytics (GA Data API — credentials stay on server)
 app.use('/api/admin/analytics', analyticsRoutes);
+
+// Site settings (hero text, stats, about text + images)
+app.use('/api/site-settings',       settingsRoutes);
+app.use('/api/admin/site-settings', settingsRoutes);
+
+// ── SEO: Sitemap + robots.txt (no rate limit — crawler friendly) ────────────
+const { router: sitemapRouter } = require('./routes/sitemap.routes');
+app.use('/', sitemapRouter);
 
 // ============================================================
 // 404 + ERROR HANDLING

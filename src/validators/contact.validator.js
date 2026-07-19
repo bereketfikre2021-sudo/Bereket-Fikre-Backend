@@ -13,11 +13,11 @@ const projectRequestRules = [
   body('first_name').trim().notEmpty().withMessage('First name is required.').isLength({ max: 50 }),
   body('last_name').trim().notEmpty().withMessage('Last name is required.').isLength({ max: 50 }),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required.'),
-  body('phone').optional({ checkFalsy: true }).isMobilePhone().withMessage('Invalid phone number.'),
+  body('phone').optional({ nullable: true, checkFalsy: true }).trim(),
   body('company').optional().trim().isLength({ max: 100 }),
   body('service_needed')
     .notEmpty()
-    .isIn(['graphic-design', 'brand-identity', 'ui-ux', 'web-design', 'multiple', 'other'])
+    .isIn(['brand-identity', 'digital-design', 'print-marketing', 'creative-direction', 'multiple', 'other'])
     .withMessage('Invalid service selection.'),
   body('budget_range')
     .notEmpty()
@@ -30,8 +30,8 @@ const projectRequestRules = [
   body('project_description')
     .trim()
     .notEmpty()
-    .isLength({ min: 50, max: 5000 })
-    .withMessage('Project description must be at least 50 characters.'),
+    .isLength({ min: 20, max: 5000 })
+    .withMessage('Project description must be at least 20 characters.'),
   body('preferred_contact_method')
     .optional()
     .isIn(['email', 'phone', 'telegram', 'either'])

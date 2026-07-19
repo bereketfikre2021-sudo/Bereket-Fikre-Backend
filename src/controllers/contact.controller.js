@@ -343,7 +343,6 @@ const replyToContact = async (req, res, next) => {
     });
 
     logger.info(`Reply sent to contact: ${contact.email}`);
-    req.logActivity('REPLIED', 'Contact', id, contact.name);
     return success(res, updated, 'Reply sent successfully');
   } catch (err) {
     next(err);
@@ -379,7 +378,6 @@ const replyToProjectRequest = async (req, res, next) => {
     });
 
     logger.info(`Reply sent to project request: ${request.email}`);
-    req.logActivity('REPLIED', 'ProjectRequest', id, `${request.firstName} ${request.lastName}`);
     return success(res, updated, 'Reply sent successfully');
   } catch (err) {
     next(err);

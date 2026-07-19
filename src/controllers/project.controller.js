@@ -7,8 +7,8 @@ const { success, created, error, paginated } = require('../utils/response');
 const { generateUniqueSlug } = require('../utils/slugify');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
-const { logActivity } = require('../utils/activity');
 const logger = require('../utils/logger');
+const { bustSitemapCache } = require('../routes/sitemap.routes');
 
 /**
  * Normalise a FormData field that may be:
@@ -27,7 +27,9 @@ const toArray = (value) => {
 const getProjects = async (req, res, next) => {
   try {
     const { page, limit, skip, take } = parsePagination(req.query);
-    const orderBy = parseSort(req.query, 'displayOrder', 'asc');
+    // Build orderBy as array so ties in displayOrder fall back to createdAt (insertion order)
+    const primarySort = parseSort(req.query, 'displayOrder', 'asc');
+    const orderBy = [primarySort, { createdAt: 'asc' }];
 
     const where = {};
     if (req.query.status) where.status = req.query.status;
@@ -135,7 +137,7 @@ const createProject = async (req, res, next) => {
     });
 
     logger.info(`Project created: ${project.id} - ${project.title}`);
-    req.logActivity('CREATED', 'Project', project.id, project.title);
+    bustSitemapCache();
     return created(res, project, 'Project created successfully');
   } catch (err) {
     next(err);
@@ -195,7 +197,7 @@ const updateProject = async (req, res, next) => {
       include: { galleryImages: { orderBy: { order: 'asc' } } },
     });
 
-    req.logActivity(status && status !== existing.status ? (status === 'PUBLISHED' ? 'PUBLISHED' : 'UNPUBLISHED') : 'UPDATED', 'Project', updated.id, updated.title);
+    bustSitemapCache();
     return success(res, updated, 'Project updated successfully');
   } catch (err) {
     next(err);
@@ -237,7 +239,6 @@ const duplicateProject = async (req, res, next) => {
     });
 
     logger.info(`Project duplicated: ${duplicate.id} from ${id}`);
-    req.logActivity('CREATED', 'Project', duplicate.id, duplicate.title);
     return created(res, duplicate, 'Project duplicated successfully');
   } catch (err) {
     next(err);
@@ -268,7 +269,7 @@ const deleteProject = async (req, res, next) => {
     await prisma.project.delete({ where: { id } });
 
     logger.info(`Project deleted: ${id}`);
-    req.logActivity('DELETED', 'Project', id, project.title);
+    bustSitemapCache();
     return success(res, null, 'Project deleted successfully');
   } catch (err) {
     next(err);

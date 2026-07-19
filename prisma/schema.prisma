@@ -281,20 +281,36 @@ model ProjectRequest {
 }
 
 // ============================================================
-// ACTIVITY LOG
+// SITE SETTINGS  (singleton row — key/value + typed image fields)
 // ============================================================
-model ActivityLog {
-  id         String   @id @default(uuid())
-  adminId    String?
-  adminName  String?  // snapshot — preserved even if admin is deleted
-  action     String   // e.g. 'CREATED', 'UPDATED', 'DELETED', 'PUBLISHED'
-  entity     String   // e.g. 'Project', 'Service', 'FAQ'
-  entityId   String?
-  entityName String?  // human-readable name snapshot
-  meta       Json?    // optional extra context
-  createdAt  DateTime @default(now())
+model SiteSettings {
+  id              String   @id @default("singleton")
 
-  @@map("activity_logs")
+  // Hero section
+  heroLine1Prefix    String   @default("Creating ")
+  heroLine1Highlight String   @default("Extraordinary")
+  heroLine2          String   @default("Experiences")
+  heroImage          String?  // Cloudinary URL
+  heroImagePublicId  String?
+
+  // Hero stats
+  statProjectsValue  String   @default("50+")
+  statProjectsLabel  String   @default("Projects")
+  statClientsValue   String   @default("30+")
+  statClientsLabel   String   @default("Clients")
+  statYearsValue     String   @default("5+")
+  statYearsLabel     String   @default("Years")
+
+  // About section
+  aboutHeading      String   @default("Hello, I'm Bereket")
+  aboutBodyDesktop  String   @db.Text @default("I design intentional, strategic visual identities that help brands communicate clearly and consistently.")
+  aboutBodyMobile   String   @db.Text @default("Senior Graphic Designer and Brand Builder focused on creating intentional, consistent visual identities across digital and print.")
+  aboutImage        String?  // Cloudinary URL
+  aboutImagePublicId String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }
 
 // ============================================================

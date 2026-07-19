@@ -62,7 +62,6 @@ const createFaq = async (req, res, next) => {
     });
 
     logger.info(`FAQ created: ${faq.id}`);
-    req.logActivity('CREATED', 'FAQ', faq.id, faq.question.substring(0,50));
     return created(res, faq, 'FAQ created successfully');
   } catch (err) {
     next(err);
@@ -90,8 +89,6 @@ const updateFaq = async (req, res, next) => {
       },
     });
 
-    req.logActivity('UPDATED', 'FAQ', updated.id, updated.question.substring(0,50));
-
     return success(res, updated, 'FAQ updated successfully');
   } catch (err) {
     next(err);
@@ -109,7 +106,6 @@ const deleteFaq = async (req, res, next) => {
     await prisma.faq.delete({ where: { id } });
 
     logger.info(`FAQ deleted: ${id}`);
-    req.logActivity('DELETED', 'FAQ', id, faq.question.substring(0,50));
     return success(res, null, 'FAQ deleted successfully');
   } catch (err) {
     next(err);

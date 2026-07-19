@@ -7,7 +7,6 @@ const { success, created, error, paginated } = require('../utils/response');
 const { deleteAsset } = require('../services/upload.service');
 const { parsePagination, parseSort } = require('../utils/pagination');
 const logger = require('../utils/logger');
-const { resolveActiveAction } = require('../utils/activityLog');
 
 // ============================================================
 // TRUSTED PARTNERS
@@ -69,7 +68,6 @@ const createPartner = async (req, res, next) => {
     });
 
     logger.info(`Partner created: ${partner.id} - ${partner.companyName}`);
-    req.logActivity('CREATED', 'Partner', partner.id, partner.companyName);
     return created(res, partner, 'Partner created successfully');
   } catch (err) {
     next(err);
@@ -106,8 +104,6 @@ const updatePartner = async (req, res, next) => {
       },
     });
 
-    req.logActivity(isActive !== undefined ? resolveActiveAction(existing, isActive) : 'UPDATED', 'Partner', updated.id, updated.companyName);
-
     return success(res, updated, 'Partner updated successfully');
   } catch (err) {
     next(err);
@@ -126,7 +122,6 @@ const deletePartner = async (req, res, next) => {
     await prisma.trustedPartner.delete({ where: { id } });
 
     logger.info(`Partner deleted: ${id}`);
-    req.logActivity('DELETED', 'Partner', id, partner.companyName);
     return success(res, null, 'Partner deleted successfully');
   } catch (err) {
     next(err);
@@ -219,7 +214,6 @@ const createTestimonial = async (req, res, next) => {
     });
 
     logger.info(`Testimonial created: ${t.id}`);
-    req.logActivity('CREATED', 'Testimonial', t.id, t.clientName);
     return created(res, t, 'Testimonial created successfully');
   } catch (err) {
     next(err);
@@ -263,8 +257,6 @@ const updateTestimonial = async (req, res, next) => {
       },
     });
 
-    req.logActivity(isActive !== undefined ? resolveActiveAction(existing, isActive) : 'UPDATED', 'Testimonial', updated.id, updated.clientName);
-
     return success(res, updated, 'Testimonial updated successfully');
   } catch (err) {
     next(err);
@@ -283,7 +275,6 @@ const deleteTestimonial = async (req, res, next) => {
     await prisma.testimonial.delete({ where: { id } });
 
     logger.info(`Testimonial deleted: ${id}`);
-    req.logActivity('DELETED', 'Testimonial', id, t.clientName);
     return success(res, null, 'Testimonial deleted successfully');
   } catch (err) {
     next(err);
