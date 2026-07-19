@@ -134,6 +134,12 @@ app.use('/api/admin/analytics', analyticsRoutes);
 app.use('/api/site-settings',       settingsRoutes);
 app.use('/api/admin/site-settings', settingsRoutes);
 
+// ── Built-in analytics ───────────────────────────────────────────────────────
+const trackRoutes           = require('./routes/track.routes');
+const builtinAnalyticsRoutes = require('./routes/builtin-analytics.routes');
+app.use('/api', trackRoutes);                               // POST /api/track (public)
+app.use('/api/admin/analytics/builtin', builtinAnalyticsRoutes); // GET  /api/admin/analytics/builtin/* (protected)
+
 // ── SEO: Sitemap + robots.txt (no rate limit — crawler friendly) ────────────
 const { router: sitemapRouter } = require('./routes/sitemap.routes');
 app.use('/', sitemapRouter);

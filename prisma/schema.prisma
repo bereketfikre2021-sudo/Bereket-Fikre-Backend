@@ -314,6 +314,62 @@ model SiteSettings {
 }
 
 // ============================================================
+// BUILT-IN ANALYTICS
+// ============================================================
+
+/// One row per visitor session (identified by fingerprint cookie)
+model VisitorSession {
+  id             String   @id @default(uuid())
+  visitorId      String   // persistent anonymous ID (stored in cookie)
+  sessionId      String   @unique // per-tab session
+  ip             String?
+  country        String?
+  city           String?
+  device         String?  // mobile | tablet | desktop
+  browser        String?
+  os             String?
+  language       String?
+  referrer       String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  screenWidth    Int?
+  screenHeight   Int?
+  startedAt      DateTime @default(now())
+  lastSeenAt     DateTime @default(now())
+  duration       Int      @default(0)  // seconds
+  bounced        Boolean  @default(true)
+  pageViews      Int      @default(1)
+
+  events AnalyticsEvent[]
+
+  @@index([visitorId])
+  @@index([startedAt])
+  @@index([country])
+  @@index([device])
+  @@map("visitor_sessions")
+}
+
+/// Fine-grained events — section views, clicks, conversions
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  sessionId  String
+  session    VisitorSession @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  event      String   // section_view | click | conversion | scroll
+  target     String?  // hero | about | portfolio | contact | cv_download | etc.
+  targetId   String?  // slug of project/insight if relevant
+  value      String?  // extra context (e.g. scroll %)
+  duration   Int?     // ms spent on section
+  createdAt  DateTime @default(now())
+
+  @@index([event])
+  @@index([target])
+  @@index([createdAt])
+  @@index([sessionId])
+  @@map("analytics_events")
+}
+
+// ============================================================
 // SHARED ENUMS
 // ============================================================
 enum ContentStatus {
