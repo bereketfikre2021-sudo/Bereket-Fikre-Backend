@@ -63,6 +63,8 @@ app.use(cors({
     // Allow requests with no origin (curl, Postman, server-to-server)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any Vercel preview deployment for the bk-admin project
+    if (/^https:\/\/bk-admin[a-z0-9-]*\.vercel\.app$/.test(origin)) return callback(null, true);
     callback(new Error(`CORS: Origin ${origin} not allowed`));
   },
   credentials: true,
