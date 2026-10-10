@@ -33,14 +33,16 @@ const getInsights = async (req, res, next) => {
     const orderBy = parseSort(req.query, 'publishDate', 'desc');
 
     const where = {};
-    if (req.query.type) where.type = req.query.type; // CASE_STUDY | BLOG_POST
-    if (req.query.status) where.status = req.query.status;
+    if (req.query.type)     where.type     = req.query.type; // CASE_STUDY | BLOG_POST
+    if (req.query.status)   where.status   = req.query.status;
+    if (req.query.pillar)   where.pillar   = req.query.pillar;
     if (req.query.category) where.category = { contains: req.query.category, mode: 'insensitive' };
-    if (req.query.tag) where.tags = { has: req.query.tag };
+    if (req.query.tag)      where.tags     = { has: req.query.tag };
+    if (req.query.projectId) where.projectId = req.query.projectId;
     if (req.query.search) {
       where.OR = [
-        { title: { contains: req.query.search, mode: 'insensitive' } },
-        { excerpt: { contains: req.query.search, mode: 'insensitive' } },
+        { title:    { contains: req.query.search, mode: 'insensitive' } },
+        { excerpt:  { contains: req.query.search, mode: 'insensitive' } },
         { category: { contains: req.query.search, mode: 'insensitive' } },
       ];
     }
@@ -61,6 +63,7 @@ const getInsights = async (req, res, next) => {
           coverImage: true, excerpt: true, category: true,
           tags: true, author: true, readingTime: true,
           publishDate: true, status: true, createdAt: true,
+          pillar: true, projectId: true,
         },
       }),
       prisma.insight.count({ where }),
@@ -96,6 +99,8 @@ const createInsight = async (req, res, next) => {
       type, title, excerpt, content, category, tags,
       author, readingTime, publishDate, status,
       seoTitle, seoDescription,
+      // Taxonomy
+      pillar, projectId,
     } = req.body;
 
     const slug = await generateUniqueSlug(title, 'insight');
@@ -114,20 +119,23 @@ const createInsight = async (req, res, next) => {
     const insight = await prisma.insight.create({
       data: {
         type,
-        title: title.trim(),
+        title:          title.trim(),
         slug,
         coverImage,
         coverPublicId,
-        excerpt: excerpt.trim(),
-        content: content.trim(),
-        category: category.trim(),
-        tags: toArray(tags),
-        author: author?.trim() || 'Bereket Fikre',
-        readingTime: calculatedReadingTime,
-        publishDate: publishDate ? new Date(publishDate) : null,
-        status: status || 'DRAFT',
-        seoTitle: seoTitle || null,
+        excerpt:        excerpt.trim(),
+        content:        content.trim(),
+        category:       category.trim(),
+        tags:           toArray(tags),
+        author:         author?.trim() || 'Bereket Fikre',
+        readingTime:    calculatedReadingTime,
+        publishDate:    publishDate ? new Date(publishDate) : null,
+        status:         status || 'DRAFT',
+        seoTitle:       seoTitle       || null,
         seoDescription: seoDescription || null,
+        // Taxonomy
+        pillar:    pillar    || null,
+        projectId: projectId || null,
       },
     });
 
@@ -151,6 +159,8 @@ const updateInsight = async (req, res, next) => {
       type, title, excerpt, content, category, tags,
       author, readingTime, publishDate, status,
       seoTitle, seoDescription,
+      // Taxonomy
+      pillar, projectId,
     } = req.body;
 
     let slug = existing.slug;
@@ -175,20 +185,25 @@ const updateInsight = async (req, res, next) => {
     const updated = await prisma.insight.update({
       where: { id },
       data: {
-        ...(type && { type }),
-        ...(title && { title: title.trim(), slug }),
+        ...(type    && { type }),
+        ...(title   && { title: title.trim(), slug }),
         coverImage,
         coverPublicId,
-        ...(excerpt && { excerpt: excerpt.trim() }),
-        ...(content && { content: content.trim() }),
+        ...(excerpt  && { excerpt:  excerpt.trim()  }),
+        ...(content  && { content:  content.trim()  }),
         ...(category && { category: category.trim() }),
         ...(tags !== undefined && { tags: toArray(tags) }),
         ...(author !== undefined && { author: author?.trim() || 'Bereket Fikre' }),
         readingTime: calculatedReadingTime,
-        publishDate: publishDate !== undefined ? (publishDate ? new Date(publishDate) : null) : existing.publishDate,
+        publishDate: publishDate !== undefined
+          ? (publishDate ? new Date(publishDate) : null)
+          : existing.publishDate,
         ...(status && { status }),
-        ...(seoTitle !== undefined && { seoTitle: seoTitle || null }),
+        ...(seoTitle       !== undefined && { seoTitle:       seoTitle       || null }),
         ...(seoDescription !== undefined && { seoDescription: seoDescription || null }),
+        // Taxonomy
+        ...(pillar     !== undefined && { pillar:     pillar     || null }),
+        ...(projectId  !== undefined && { projectId:  projectId  || null }),
       },
     });
 
@@ -226,6 +241,9 @@ const duplicateInsight = async (req, res, next) => {
         status:         'DRAFT',
         seoTitle:       original.seoTitle,
         seoDescription: original.seoDescription,
+        // Taxonomy — copy across
+        pillar:     original.pillar,
+        projectId:  original.projectId,
       },
     });
 

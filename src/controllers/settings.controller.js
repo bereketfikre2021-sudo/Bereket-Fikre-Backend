@@ -63,6 +63,10 @@ const updateSettings = async (req, res, next) => {
       aboutHeading,
       aboutBodyDesktop,
       aboutBodyMobile,
+      // Expanded identity fields
+      tagline,
+      currentlyBuilding,
+      availability,
     } = req.body;
 
     // Build update object — only include provided fields
@@ -79,6 +83,9 @@ const updateSettings = async (req, res, next) => {
     if (aboutHeading       !== undefined) data.aboutHeading       = aboutHeading;
     if (aboutBodyDesktop   !== undefined) data.aboutBodyDesktop   = aboutBodyDesktop;
     if (aboutBodyMobile    !== undefined) data.aboutBodyMobile    = aboutBodyMobile;
+    if (tagline            !== undefined) data.tagline            = tagline            || null;
+    if (currentlyBuilding  !== undefined) data.currentlyBuilding  = currentlyBuilding  || null;
+    if (availability       !== undefined) data.availability       = availability       || null;
 
     const settings = await upsert(data);
 

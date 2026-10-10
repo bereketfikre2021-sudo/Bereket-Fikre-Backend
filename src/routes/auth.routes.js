@@ -3,11 +3,15 @@ const {
   login, refresh, logout,
   getMe, getProfile,
   updateAvatar, changePassword,
+  forgotPassword, resetPassword,
 } = require('../controllers/auth.controller');
 const { authenticate }  = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 const validate          = require('../middleware/validate');
-const { loginRules, changePasswordRules, refreshRules } = require('../validators/auth.validator');
+const {
+  loginRules, changePasswordRules, refreshRules,
+  forgotPasswordRules, resetPasswordRules,
+} = require('../validators/auth.validator');
 const { upload }        = require('../services/upload.service');
 
 const router = Router();
@@ -27,6 +31,12 @@ router.post('/login', authLimiter, loginRules, validate, login);
 
 // POST /api/auth/refresh
 router.post('/refresh', authLimiter, refreshRules, validate, refresh);
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', authLimiter, forgotPasswordRules, validate, forgotPassword);
+
+// POST /api/auth/reset-password
+router.post('/reset-password', authLimiter, resetPasswordRules, validate, resetPassword);
 
 // ── Protected ───────────────────────────────────────────────────────────────
 // POST /api/auth/logout

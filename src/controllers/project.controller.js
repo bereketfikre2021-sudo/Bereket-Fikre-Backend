@@ -35,6 +35,18 @@ const getProjects = async (req, res, next) => {
     if (req.query.status) where.status = req.query.status;
     if (req.query.featured !== undefined) where.featured = req.query.featured === 'true';
 
+    // Pillar filter — matches primaryPillar OR secondaryPillars contains the value
+    if (req.query.primaryPillar) {
+      where.OR = [
+        { primaryPillar: req.query.primaryPillar },
+        { secondaryPillars: { has: req.query.primaryPillar } },
+      ];
+    }
+
+    // Taxonomy filters
+    if (req.query.tier)        where.tier        = req.query.tier;
+    if (req.query.projectType) where.projectType = req.query.projectType;
+
     // Admin filter tabs — maps to seeded category slugs
     const FILTER_GROUPS = {
       'brand-identity': ['brand-identity-design', 'logo-design', 'visual-identity-systems'],
@@ -52,6 +64,7 @@ const getProjects = async (req, res, next) => {
         { title: { contains: req.query.search, mode: 'insensitive' } },
         { shortDescription: { contains: req.query.search, mode: 'insensitive' } },
         { category: { contains: req.query.search, mode: 'insensitive' } },
+        { client: { contains: req.query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -81,6 +94,7 @@ const getProject = async (req, res, next) => {
 
     const project = await prisma.project.findFirst({
       where: {
+        status: 'PUBLISHED',          // guard: drafts are never publicly visible
         OR: [{ id: idOrSlug }, { slug: idOrSlug }],
       },
       include: {
@@ -101,8 +115,12 @@ const createProject = async (req, res, next) => {
   try {
     const {
       title, category, shortDescription, fullDescription,
-      technologies, liveUrl, githubUrl, featured, displayOrder,
-      status, seoTitle, seoDescription,
+      technologies, liveUrl, githubUrl, appUrl,
+      featured, displayOrder, status,
+      seoTitle, seoDescription,
+      // Taxonomy fields
+      primaryPillar, secondaryPillars, projectType, tier,
+      client, role, responsibilities, relatedProjectIds, year,
     } = req.body;
 
     const slug = await generateUniqueSlug(title, 'project');
@@ -124,14 +142,25 @@ const createProject = async (req, res, next) => {
         fullDescription: fullDescription.trim(),
         thumbnail,
         thumbnailPublicId,
-        technologies: toArray(technologies),
-        liveUrl: liveUrl || null,
-        githubUrl: githubUrl || null,
-        featured: featured === true || featured === 'true',
-        displayOrder: parseInt(displayOrder, 10) || 0,
-        status: status || 'DRAFT',
-        seoTitle: seoTitle || null,
-        seoDescription: seoDescription || null,
+        technologies:     toArray(technologies),
+        liveUrl:          liveUrl  || null,
+        githubUrl:        githubUrl || null,
+        appUrl:           appUrl   || null,
+        featured:         featured === true || featured === 'true',
+        displayOrder:     parseInt(displayOrder, 10) || 0,
+        status:           status || 'DRAFT',
+        seoTitle:         seoTitle         || null,
+        seoDescription:   seoDescription   || null,
+        // Taxonomy
+        primaryPillar:      primaryPillar      || null,
+        secondaryPillars:   toArray(secondaryPillars),
+        projectType:        projectType        || null,
+        tier:               tier               || null,
+        client:             client             ? client.trim()  : null,
+        role:               role               ? role.trim()    : null,
+        responsibilities:   toArray(responsibilities),
+        relatedProjectIds:  toArray(relatedProjectIds),
+        year:               year ? parseInt(year, 10) : null,
       },
       include: { galleryImages: true },
     });
@@ -154,8 +183,12 @@ const updateProject = async (req, res, next) => {
 
     const {
       title, category, shortDescription, fullDescription,
-      technologies, liveUrl, githubUrl, featured, displayOrder,
-      status, seoTitle, seoDescription,
+      technologies, liveUrl, githubUrl, appUrl,
+      featured, displayOrder, status,
+      seoTitle, seoDescription,
+      // Taxonomy fields
+      primaryPillar, secondaryPillars, projectType, tier,
+      client, role, responsibilities, relatedProjectIds, year,
     } = req.body;
 
     // Regenerate slug if title changed
@@ -182,17 +215,28 @@ const updateProject = async (req, res, next) => {
         ...(title && { title: title.trim(), slug }),
         ...(category && { category: category.trim() }),
         ...(shortDescription && { shortDescription: shortDescription.trim() }),
-        ...(fullDescription && { fullDescription: fullDescription.trim() }),
+        ...(fullDescription  && { fullDescription:  fullDescription.trim()  }),
         thumbnail,
         thumbnailPublicId,
-        ...(technologies !== undefined && { technologies: toArray(technologies) }),
-        liveUrl: liveUrl !== undefined ? (liveUrl || null) : existing.liveUrl,
-        githubUrl: githubUrl !== undefined ? (githubUrl || null) : existing.githubUrl,
-        ...(featured !== undefined && { featured: featured === true || featured === 'true' }),
-        ...(displayOrder !== undefined && { displayOrder: parseInt(displayOrder, 10) || 0 }),
-        ...(status && { status }),
-        seoTitle: seoTitle !== undefined ? (seoTitle || null) : existing.seoTitle,
+        ...(technologies      !== undefined && { technologies:    toArray(technologies)    }),
+        liveUrl:    liveUrl    !== undefined ? (liveUrl    || null) : existing.liveUrl,
+        githubUrl:  githubUrl  !== undefined ? (githubUrl  || null) : existing.githubUrl,
+        appUrl:     appUrl     !== undefined ? (appUrl     || null) : existing.appUrl,
+        ...(featured      !== undefined && { featured:     featured     === true || featured     === 'true' }),
+        ...(displayOrder  !== undefined && { displayOrder: parseInt(displayOrder,  10) || 0 }),
+        ...(status        && { status }),
+        seoTitle:       seoTitle       !== undefined ? (seoTitle       || null) : existing.seoTitle,
         seoDescription: seoDescription !== undefined ? (seoDescription || null) : existing.seoDescription,
+        // Taxonomy — only update if the field was explicitly sent
+        ...(primaryPillar     !== undefined && { primaryPillar:     primaryPillar     || null }),
+        ...(secondaryPillars  !== undefined && { secondaryPillars:  toArray(secondaryPillars)  }),
+        ...(projectType       !== undefined && { projectType:       projectType       || null }),
+        ...(tier              !== undefined && { tier:              tier              || null }),
+        ...(client            !== undefined && { client:            client ? client.trim() : null }),
+        ...(role              !== undefined && { role:              role   ? role.trim()   : null }),
+        ...(responsibilities  !== undefined && { responsibilities:  toArray(responsibilities)  }),
+        ...(relatedProjectIds !== undefined && { relatedProjectIds: toArray(relatedProjectIds) }),
+        ...(year              !== undefined && { year: year ? parseInt(year, 10) : null }),
       },
       include: { galleryImages: { orderBy: { order: 'asc' } } },
     });
@@ -229,11 +273,22 @@ const duplicateProject = async (req, res, next) => {
         technologies:     original.technologies,
         liveUrl:          original.liveUrl,
         githubUrl:        original.githubUrl,
+        appUrl:           original.appUrl,
         featured:         false,
         displayOrder:     original.displayOrder + 1,
         status:           'DRAFT',
         seoTitle:         original.seoTitle,
         seoDescription:   original.seoDescription,
+        // Taxonomy — copy across
+        primaryPillar:     original.primaryPillar,
+        secondaryPillars:  original.secondaryPillars,
+        projectType:       original.projectType,
+        tier:              original.tier,
+        client:            original.client,
+        role:              original.role,
+        responsibilities:  original.responsibilities,
+        relatedProjectIds: original.relatedProjectIds,
+        year:              original.year,
       },
       include: { galleryImages: true },
     });

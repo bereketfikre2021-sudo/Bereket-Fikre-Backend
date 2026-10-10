@@ -29,7 +29,8 @@ model Admin {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
+  refreshTokens      RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("admins")
 }
@@ -43,6 +44,19 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  token     String    @unique   // SHA-256 hash of the raw token
+  adminId   String
+  admin     Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime              // 1-hour expiry
+  usedAt    DateTime?             // null = unused; set when consumed
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+  @@map("password_reset_tokens")
 }
 
 enum Role {
@@ -73,6 +87,18 @@ model Project {
   seoDescription   String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+
+  // ── CREATE / BUILD / GROW / EXPLORE taxonomy ──────────────
+  primaryPillar     String?      // CREATE | BUILD | GROW | EXPLORE
+  secondaryPillars  String[]     // additional pillars this project appears in
+  projectType       String?      // client-work | personal-product | business | employment | experiment
+  tier              String?      // flagship | selected | archive
+  client            String?      // client or company name
+  role              String?      // e.g. "Brand Designer · Developer"
+  responsibilities  String[]     // list of specific responsibilities
+  appUrl            String?      // second live URL (e.g. app store / product URL)
+  relatedProjectIds String[]     // UUIDs of related projects
+  year              Int?         // year of delivery / completion
 
   @@map("projects")
 }
@@ -119,6 +145,8 @@ model Service {
   // Frontend-matching fields
   type             String?        // e.g. "Complete Branding"
   deliveryTime     String?        // e.g. "14-21 Business Days"
+  // CREATE / BUILD / GROW / EXPLORE taxonomy
+  pillar           String?        // CREATE | BUILD | GROW | EXPLORE
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
@@ -172,6 +200,10 @@ model Insight {
   seoDescription String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
+  // CREATE / BUILD / GROW / EXPLORE taxonomy
+  pillar         String?       // CREATE | BUILD | GROW | EXPLORE
+  projectId      String?       // optional FK → Project (links case study to its project)
 
   @@map("insights")
 }
@@ -307,6 +339,11 @@ model SiteSettings {
   aboutBodyMobile   String   @db.Text @default("Senior Graphic Designer and Brand Builder focused on creating intentional, consistent visual identities across digital and print.")
   aboutImage        String?  // Cloudinary URL
   aboutImagePublicId String?
+
+  // Expanded identity fields
+  tagline            String?  // e.g. "Creative Director · Designer · Builder"
+  currentlyBuilding  String?  // e.g. "Building the next version of Fit Track Pro"
+  availability       String?  // e.g. "Available for selected projects from Q3 2026"
 
   updatedAt DateTime @updatedAt
 

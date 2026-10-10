@@ -91,7 +91,7 @@ const sendProjectRequestNotification = async (req) => {
   }
 };
 
-module.exports = { sendContactNotification, sendProjectRequestNotification, sendReplyEmail };
+module.exports = { sendContactNotification, sendProjectRequestNotification, sendReplyEmail, sendPasswordResetEmail };
 
 /**
  * Send a direct reply email from admin to a contact or project request sender
@@ -124,4 +124,52 @@ async function sendReplyEmail({ to, toName, subject, originalMessage, replyMessa
     `,
   });
   logger.info(`Reply sent to ${to}`);
+}
+
+/**
+ * Send a password-reset link to the admin's email address
+ */
+async function sendPasswordResetEmail({ to, resetLink }) {
+  const t = getTransporter();
+  if (!t) {
+    const err = new Error('Email not configured — add EMAIL_USER and EMAIL_PASS to your .env');
+    logger.error(err.message);
+    throw err;
+  }
+
+  await t.sendMail({
+    from: `"Bereket Fikre Admin" <${env.EMAIL_FROM}>`,
+    to,
+    subject: 'Reset your admin password',
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#333;padding:32px 0">
+        <h2 style="margin-bottom:8px">Password Reset Request</h2>
+        <p style="color:#555;line-height:1.6">
+          You requested a password reset for your admin account.
+          Click the button below to choose a new password.
+          This link is valid for <strong>1 hour</strong>.
+        </p>
+        <div style="text-align:center;margin:32px 0">
+          <a href="${resetLink}"
+             style="background:#4f46e5;color:#fff;padding:14px 28px;border-radius:8px;
+                    text-decoration:none;font-weight:600;display:inline-block">
+            Reset Password
+          </a>
+        </div>
+        <p style="font-size:13px;color:#888;line-height:1.6">
+          If the button doesn't work, copy and paste this URL into your browser:<br/>
+          <a href="${resetLink}" style="color:#4f46e5;word-break:break-all">${resetLink}</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+        <p style="font-size:12px;color:#aaa">
+          If you didn't request a password reset, you can safely ignore this email.
+          Your password will not change.
+        </p>
+        <p style="font-size:12px;color:#aaa;margin-top:8px">
+          — Bereket Fikre Admin · <a href="https://bereketfikre.et" style="color:#aaa">bereketfikre.et</a>
+        </p>
+      </div>
+    `,
+  });
+  logger.info(`Password reset email sent to ${to}`);
 }

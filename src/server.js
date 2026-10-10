@@ -18,7 +18,6 @@ const PORT = env.PORT;
  * constant traffic so it never pauses.
  */
 const startKeepAlive = () => {
-  if (env.isProd) return; // not needed in production
   const INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
   setInterval(async () => {
     try {

@@ -31,13 +31,10 @@ const urlEntry = ({ loc, lastmod, changefreq, priority }) =>
 
 // ── Static pages ───────────────────────────────────────────────────────────
 const STATIC_PAGES = [
-  { loc: '/',           changefreq: 'weekly',  priority: '1.0' },
-  { loc: '/#about',     changefreq: 'monthly', priority: '0.7' },
-  { loc: '/#portfolio', changefreq: 'weekly',  priority: '0.9' },
-  { loc: '/#services',  changefreq: 'monthly', priority: '0.8' },
-  { loc: '/#blog',      changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/#faq',       changefreq: 'monthly', priority: '0.5' },
-  { loc: '/#contact',   changefreq: 'monthly', priority: '0.6' },
+  { loc: '/',        changefreq: 'weekly',  priority: '1.0' },
+  { loc: '/work',    changefreq: 'weekly',  priority: '0.9' },
+  { loc: '/about',   changefreq: 'monthly', priority: '0.7' },
+  { loc: '/explore', changefreq: 'monthly', priority: '0.7' },
 ];
 
 // ── Build XML ──────────────────────────────────────────────────────────────
@@ -66,24 +63,16 @@ async function buildSitemap() {
       // Static pages — use today as lastmod
       ...STATIC_PAGES.map((p) => urlEntry({ ...p, lastmod: now2 })),
 
-      // Published projects → link to /#portfolio (single-page app)
+      // Published projects → each gets its own /work/:slug URL
       ...projects.map((p) =>
-        urlEntry({ loc: `/#portfolio`, lastmod: p.updatedAt, changefreq: 'monthly', priority: '0.8' })
+        urlEntry({ loc: `/work/${p.slug}`, lastmod: p.updatedAt, changefreq: 'monthly', priority: '0.8' })
       ),
 
-      // Published case studies
-      ...insights
-        .filter((i) => i.type === 'CASE_STUDY')
-        .map((i) =>
-          urlEntry({ loc: `/#portfolio`, lastmod: i.updatedAt, changefreq: 'monthly', priority: '0.9' })
-        ),
-
-      // Published blog posts
-      ...insights
-        .filter((i) => i.type === 'BLOG_POST')
-        .map((i) =>
-          urlEntry({ loc: `/#blog`, lastmod: i.updatedAt, changefreq: 'monthly', priority: '0.7' })
-        ),
+      // Published case studies and blog posts — link to /work for now
+      // (individual insight pages are Phase 4+ roadmap)
+      ...insights.map((i) =>
+        urlEntry({ loc: `/work`, lastmod: i.updatedAt, changefreq: 'weekly', priority: '0.85' })
+      ),
     ];
 
     // Deduplicate by loc+lastmod — keep newest lastmod per loc

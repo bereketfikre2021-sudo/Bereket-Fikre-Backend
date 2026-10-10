@@ -1,5 +1,7 @@
 const { body } = require('express-validator');
 
+const VALID_PILLARS = ['CREATE', 'BUILD', 'GROW', 'EXPLORE'];
+
 const sharedRules = [
   // tags comes as repeated FormData fields — skip isArray(), controller handles coercion
   body('author').optional().trim(),
@@ -8,6 +10,15 @@ const sharedRules = [
   body('status').optional().isIn(['DRAFT', 'PUBLISHED']),
   body('seoTitle').optional().isLength({ max: 60 }),
   body('seoDescription').optional().isLength({ max: 160 }),
+  // Taxonomy fields
+  body('pillar')
+    .optional({ checkFalsy: true })
+    .isIn(VALID_PILLARS)
+    .withMessage(`pillar must be one of: ${VALID_PILLARS.join(', ')}.`),
+  body('projectId')
+    .optional({ checkFalsy: true })
+    .isUUID()
+    .withMessage('projectId must be a valid UUID.'),
 ];
 
 // CREATE — required fields enforced

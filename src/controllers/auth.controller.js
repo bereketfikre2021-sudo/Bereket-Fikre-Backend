@@ -4,12 +4,14 @@
  */
 
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const prisma = require('../config/database');
 const env = require('../config/env');
 const { success, error } = require('../utils/response');
 const { deleteAsset } = require('../services/upload.service');
+const { sendPasswordResetEmail } = require('../utils/email');
 const logger = require('../utils/logger');
 
 /**
@@ -217,4 +219,102 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-module.exports = { login, refresh, logout, getMe, getProfile, updateAvatar, changePassword };
+// POST /api/auth/forgot-password
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Always respond 200 to prevent email enumeration
+    const admin = await prisma.admin.findUnique({ where: { email } });
+    if (!admin || !admin.isActive) {
+      return success(res, null, 'If that email is registered, a reset link has been sent.');
+    }
+
+    // Invalidate any existing unused tokens for this admin
+    await prisma.passwordResetToken.deleteMany({ where: { adminId: admin.id } });
+
+    // Generate a cryptographically secure raw token
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    // Store only the SHA-256 hash — raw token travels only in the email
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    await prisma.passwordResetToken.create({
+      data: {
+        token: hashedToken,
+        adminId: admin.id,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      },
+    });
+
+    const resetLink = `${env.ADMIN_URL}/reset-password?token=${rawToken}`;
+
+    try {
+      await sendPasswordResetEmail({ to: admin.email, resetLink });
+    } catch (emailErr) {
+      // Roll back token so admin can retry once email is configured
+      await prisma.passwordResetToken.deleteMany({ where: { adminId: admin.id } });
+      logger.error(`Forgot-password email failed: ${emailErr.message}`);
+      return error(res, 'Failed to send reset email. Please check the server email configuration.', 503);
+    }
+
+    logger.info(`Password reset requested for: ${admin.email}`);
+    return success(res, null, 'If that email is registered, a reset link has been sent.');
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/auth/reset-password
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Hash the incoming raw token to look up the stored hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const record = await prisma.passwordResetToken.findUnique({
+      where: { token: hashedToken },
+      include: { admin: true },
+    });
+
+    if (!record) {
+      return error(res, 'Invalid or expired reset link.', 400);
+    }
+
+    if (record.usedAt) {
+      return error(res, 'This reset link has already been used.', 400);
+    }
+
+    if (record.expiresAt < new Date()) {
+      await prisma.passwordResetToken.delete({ where: { id: record.id } });
+      return error(res, 'This reset link has expired. Please request a new one.', 400);
+    }
+
+    if (!record.admin.isActive) {
+      return error(res, 'Account is deactivated.', 403);
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+
+    // Update password and mark token as used in a transaction
+    await prisma.$transaction([
+      prisma.admin.update({
+        where: { id: record.admin.id },
+        data: { password: hashed },
+      }),
+      prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+      // Invalidate all active sessions
+      prisma.refreshToken.deleteMany({ where: { adminId: record.admin.id } }),
+    ]);
+
+    logger.info(`Password reset completed for: ${record.admin.email}`);
+    return success(res, null, 'Password reset successfully. You can now log in with your new password.');
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { login, refresh, logout, getMe, getProfile, updateAvatar, changePassword, forgotPassword, resetPassword };
