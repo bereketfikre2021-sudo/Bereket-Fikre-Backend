@@ -23,6 +23,8 @@ const getDashboardStats = async (req, res, next) => {
       newContactCount,
       projectRequestCount,
       newRequestCount,
+      capabilityCount,
+      principleCount,
     ] = await Promise.all([
       prisma.project.count(),
       prisma.project.count({ where: { status: 'PUBLISHED' } }),
@@ -37,6 +39,8 @@ const getDashboardStats = async (req, res, next) => {
       prisma.contactSubmission.count({ where: { status: 'NEW' } }),
       prisma.projectRequest.count(),
       prisma.projectRequest.count({ where: { status: 'NEW' } }),
+      prisma.capability.count({ where: { isActive: true } }),
+      prisma.workingPrinciple.count({ where: { isActive: true } }),
     ]);
 
     // Recent inbox
@@ -101,6 +105,8 @@ const getDashboardStats = async (req, res, next) => {
         partners: { total: partnerCount },
         testimonials: { total: testimonialCount },
         faqs: { total: faqCount },
+        capabilities: { total: capabilityCount },
+        principles: { total: principleCount },
         contacts: { total: contactCount, new: newContactCount },
         projectRequests: { total: projectRequestCount, new: newRequestCount },
         unread: newContactCount + newRequestCount,

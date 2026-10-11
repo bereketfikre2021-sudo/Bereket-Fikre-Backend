@@ -407,6 +407,39 @@ model AnalyticsEvent {
 }
 
 // ============================================================
+// CAPABILITIES  (CREATE · BUILD · GROW cards)
+// ============================================================
+model Capability {
+  id           String   @id @default(uuid())
+  pillar       String   // CREATE | BUILD | GROW
+  label        String   // e.g. "Create"
+  headline     String   // e.g. "Creative Direction & Brand Design"
+  description  String   @db.Text
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("capabilities")
+}
+
+// ============================================================
+// WORKING PRINCIPLES  (Philosophy section)
+// ============================================================
+model WorkingPrinciple {
+  id           String   @id @default(uuid())
+  number       String   // "01", "02", "03"
+  heading      String   // e.g. "Concept first."
+  body         String   @db.Text
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("working_principles")
+}
+
+// ============================================================
 // SHARED ENUMS
 // ============================================================
 enum ContentStatus {

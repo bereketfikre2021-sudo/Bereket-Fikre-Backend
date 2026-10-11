@@ -20,6 +20,8 @@ const serviceRoutes = require('./routes/service.routes');
 const insightRoutes = require('./routes/insight.routes');
 const partnerRoutes = require('./routes/partner.routes');
 const faqRoutes = require('./routes/faq.routes');
+const capabilityRoutes = require('./routes/capability.routes');
+const principleRoutes  = require('./routes/principle.routes');
 const contactRoutes = require('./routes/contact.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
@@ -46,6 +48,10 @@ const extraOrigins = process.env.CORS_EXTRA_ORIGINS
 const allowedOrigins = [
   env.FRONTEND_URL,
   env.ADMIN_URL,
+  // Production domains (hardcoded as safety net in case env vars are missing)
+  'https://bereketfikre.et',
+  'https://www.bereketfikre.et',
+  'https://admin.bereketfikre.et',
   // Common local dev ports
   'http://localhost:3000',
   'http://localhost:3001',
@@ -118,6 +124,12 @@ app.use('/api/admin/insights', insightRoutes);
 
 app.use('/api/faqs', faqRoutes);
 app.use('/api/admin/faqs', faqRoutes);
+
+app.use('/api/capabilities',        capabilityRoutes);
+app.use('/api/admin/capabilities',  capabilityRoutes);
+
+app.use('/api/principles',          principleRoutes);
+app.use('/api/admin/principles',    principleRoutes);
 
 // Partners & Testimonials share a single router
 app.use('/api', partnerRoutes);
