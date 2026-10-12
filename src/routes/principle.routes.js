@@ -4,7 +4,7 @@ const {
 } = require('../controllers/principle.controller');
 const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
-const { principleRules, reorderRules } = require('../validators/principle.validator');
+const { principleCreateRules, principleRules, reorderRules } = require('../validators/principle.validator');
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get('/', getPrinciples);
 router.get('/:id', getPrinciple);
 
 // ——— Protected ———
-router.post('/', authenticate, principleRules, validate, createPrinciple);
+router.post('/', authenticate, principleCreateRules, validate, createPrinciple);
 router.put('/reorder', authenticate, reorderRules, validate, reorderPrinciples);
 router.put('/:id', authenticate, principleRules, validate, updatePrinciple);
 router.delete('/:id', authenticate, deletePrinciple);

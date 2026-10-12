@@ -58,7 +58,7 @@ const updateProjectRules = [
 
 const listRules = [
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('limit').optional().isInt({ min: 1, max: 200 }),
   query('status').optional().isIn(['DRAFT', 'PUBLISHED']),
   query('featured').optional().isBoolean(),
   query('order').optional().isIn(['asc', 'desc']),

@@ -74,7 +74,7 @@ module.exports = {
 
   // ── CORS ─────────────────────────────────────────────────────────────────────
   FRONTEND_URL : process.env.FRONTEND_URL || 'https://bereketfikre.et',
-  ADMIN_URL    : process.env.ADMIN_URL    || 'http://localhost:3000',
+  ADMIN_URL    : process.env.ADMIN_URL    || 'https://admin.bereketfikre.et',
 
   // ── Email (Nodemailer) ───────────────────────────────────────────────────────
   EMAIL_HOST : process.env.EMAIL_HOST || 'smtp.gmail.com',
