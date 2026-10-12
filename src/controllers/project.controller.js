@@ -207,6 +207,13 @@ const updateProject = async (req, res, next) => {
       }
       thumbnail = req.file.path;
       thumbnailPublicId = req.file.filename;
+    } else if (req.body.removeThumbnail === 'true') {
+      // Explicit removal — delete from Cloudinary and clear DB fields
+      if (existing.thumbnailPublicId) {
+        await deleteAsset(existing.thumbnailPublicId);
+      }
+      thumbnail = null;
+      thumbnailPublicId = null;
     }
 
     const updated = await prisma.project.update({

@@ -9,12 +9,11 @@ const { error } = require('../utils/response');
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return error(
-      res,
-      'Validation failed.',
-      422,
-      errors.array().map((e) => ({ field: e.path, message: e.msg }))
-    );
+    const errs = errors.array().map((e) => ({ field: e.path, message: e.msg }));
+    // Temporary: log to server console so we can diagnose 422s
+    const logger = require('../utils/logger');
+    logger.warn(`Validation failed [${req.method} ${req.path}]: ${JSON.stringify(errs)}`);
+    return error(res, 'Validation failed.', 422, errs);
   }
   next();
 };

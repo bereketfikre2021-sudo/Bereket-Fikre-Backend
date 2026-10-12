@@ -171,11 +171,19 @@ const updateInsight = async (req, res, next) => {
     let coverImage = existing.coverImage;
     let coverPublicId = existing.coverPublicId;
     if (req.file) {
+      // New file uploaded — delete old asset and store new one
       if (existing.coverPublicId) {
         await deleteAsset(existing.coverPublicId);
       }
       coverImage = req.file.path;
       coverPublicId = req.file.filename;
+    } else if (req.body.removeCoverImage === 'true') {
+      // Explicit removal — delete from Cloudinary and clear DB fields
+      if (existing.coverPublicId) {
+        await deleteAsset(existing.coverPublicId);
+      }
+      coverImage = null;
+      coverPublicId = null;
     }
 
     const calculatedReadingTime = readingTime
